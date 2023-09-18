@@ -1,9 +1,11 @@
+#pragma once
+
 #include "board.hpp"
 #include "engine.hpp"
 #include "neural_network.hpp"
-#include <bits/stdc++.h>
+#include <algorithm>
 
-typedef struct
+typedef struct move_eval
 {
     U16 move;
     double eval;

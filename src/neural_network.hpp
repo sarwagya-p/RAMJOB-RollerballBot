@@ -1,6 +1,9 @@
+#pragma once
+
 #include<vector>
 
 class NeuralNetwork {
+public:
     NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes);
 
     double evaluate(std::vector<double> features);
