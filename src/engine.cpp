@@ -4,21 +4,6 @@
 
 #include "board.hpp"
 #include "engine.hpp"
-#include "neural_network.hpp"
-
-class Node {
-    Board* board_state;
-    std::unordered_set<U16> legal_moves;
-
-    Node* parent_node;
-    std::vector<Node*> children;
-
-    NeuralNetwork* evaluator;
-};
-
-void find_best_mvoe_and_train(Board& b){
-    
-}
 
 void Engine::find_best_move(const Board& b) {
 
