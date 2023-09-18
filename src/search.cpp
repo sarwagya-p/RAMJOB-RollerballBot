@@ -16,14 +16,13 @@ Node::Node(Board* board_state)
 
 void Node::Order_Children()
 {
-    move_eval_arr = std::vector<move_eval>(legal_moves.size());
     move_eval temp;
-    for (auto i = legal_moves.begin(); i != legal_moves.end(); ++i)
+    for (U16 move: legal_moves)
     {
-        temp.move = *i;
+        temp.move = move;
         temp.eval = evaluator->evaluate(board_to_dioble(board_state));
 
-    move_eval_arr[i] = temp;
+        move_eval_arr.push_back(temp);
     }
     std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
 }
