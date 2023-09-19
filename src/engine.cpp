@@ -2,14 +2,17 @@
 #include <random>
 #include <iostream>
 
+#include "search.hpp"
 #include "board.hpp"
 #include "engine.hpp"
-#include "search.hpp"
+
+static NeuralNetwork* evaluator = new NeuralNetwork(12, {10, 10});
 
 void Engine::find_best_move(const Board& b) {
 
     Board* board_state = b.copy();
-    Node first_node = Node(board_state);
+
+    Node first_node = Node(board_state, evaluator);
     first_node.search_move(board_state, this->search, this->best_move, false);
 
     // pick a random move

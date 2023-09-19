@@ -10,8 +10,8 @@ struct CompareMoveEval{
     }
 };
 
-Node::Node(Board* board_state) 
-    :board_state(board_state), num_moves(0)
+Node::Node(Board* board_state, NeuralNetwork* evaluator) 
+    :board_state(board_state), num_moves(0), evaluator(evaluator)
     {
         legal_moves = board_state->get_legal_moves();
     }
@@ -63,7 +63,7 @@ double Node::score()
     win = board_state->in_check() && (board_state->data.player_to_play >> 6);
     draw = !board_state->in_check();
 
-    lose = ~draw & ~win;
+    lose = !draw & !win;
     double margin_score = 0;
     margin_score -= (board_state->data.b_rook_ws != DEAD)*3;
     margin_score -= (board_state->data.b_rook_bs != DEAD)*3;
@@ -106,7 +106,7 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
             optimum.movement = maxnode->move_eval_arr[0].movement;
             best_move = optimum.movement;
             b->undo_last_move(maxnode->move_eval_arr[0].movement);
-            for(int j = 1; j < maxnode->move_eval_arr.size(); j++)
+            for(size_t j = 1; j < maxnode->move_eval_arr.size(); j++)
             {
                 b->do_move(maxnode->move_eval_arr[j].movement);
                 d = MIN_VAL(b, alpha, beta, 0, cutoff);
@@ -147,7 +147,7 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
             optimum.movement = minnode->move_eval_arr.end()[-1].movement;
             b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
             best_move = optimum.movement;
-            for(int j = 2; j < minnode->move_eval_arr.size()+1; j++)
+            for(size_t j = 2; j < minnode->move_eval_arr.size()+1; j++)
             {
                 b->do_move(minnode->move_eval_arr.end()[-j].movement);
                 d = MAX_VAL(b, alpha, beta, 0, cutoff);
@@ -170,13 +170,14 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
     if (training)
     {
         evaluator->update(board_to_dioble(b), optimum.eval);
+        evaluator->dump_weights("data/weights.txt");
     }
     return;
 }
 
 double Node::MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 {
-    Node* maxnode = new Node(b);
+    Node* maxnode = new Node(b, evaluator);
     if (maxnode->legal_moves.empty())
     {
         return maxnode->score();
@@ -197,7 +198,7 @@ double Node::MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     }    
     maxmove = d;
     b->undo_last_move(maxnode->move_eval_arr[0].movement);
-    for(int j = 1; j < maxnode->move_eval_arr.size(); j++)
+    for(size_t j = 1; j < maxnode->move_eval_arr.size(); j++)
     {
         b->do_move(maxnode->move_eval_arr[j].movement);
         d = MIN_VAL(b, alpha, beta, i+1, cutoff);
@@ -217,7 +218,7 @@ double Node::MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 
 double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 {
-    Node* minnode = new Node(b);
+    Node* minnode = new Node(b, evaluator);
     if (minnode->legal_moves.empty())
     {
         return minnode->score();
@@ -238,7 +239,7 @@ double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     }    
     minmove = d;
     b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
-    for(int j = 2; j < minnode->move_eval_arr.size()+1; j++)
+    for(size_t j = 2; j < minnode->move_eval_arr.size()+1; j++)
     {
         b->do_move(minnode->move_eval_arr.end()[-j].movement);
         d = MAX_VAL(b, alpha, beta, i+1, cutoff);

@@ -1,12 +1,13 @@
 #pragma once
 
+#include <fstream>
 #include<vector>
 #include <iostream>
-#include <fstream>
 
 class NeuralNetwork {
 public:
-    NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights=true);
+    NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights=true, bool to_train = false);
+    NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename, bool to_train = false);
 
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
@@ -17,6 +18,7 @@ public:
     void print_weights();
 
 // private:
+    bool to_train;
     std::vector<int> layer_sizes;
     
     double learning_rate;

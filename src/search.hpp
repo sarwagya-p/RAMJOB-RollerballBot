@@ -1,8 +1,9 @@
 #pragma once
 
+#include "neural_network.hpp"
 #include "board.hpp"
 #include "engine.hpp"
-#include "neural_network.hpp"
+
 // #include <algorithm>
 
 typedef struct move_eval
@@ -23,7 +24,7 @@ public:
 
     std::vector<move_eval> move_eval_arr; 
 
-    Node(Board* board_state);
+    Node(Board* board_state, NeuralNetwork* evaluator);
     void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training);
     double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
     double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);
