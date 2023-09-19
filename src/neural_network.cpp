@@ -65,7 +65,16 @@ std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector
 }
 
 double NeuralNetwork::evaluate(std::vector<double> features){
-    return forward_prop_outputs(features).back()[0];
+    // for testing node search
+
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::normal_distribution<double> normal_random(0,10);
+    return normal_random(generator) + 100;
+    
+    // actual
+    // return forward_prop_outputs(features).back()[0];
+    
 }
 
 void NeuralNetwork::update(std::vector<double> features, double evaluated_output){

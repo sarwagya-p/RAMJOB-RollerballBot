@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <iostream>
 #include "search.hpp"
 #include <float.h>
 
@@ -17,14 +19,21 @@ Node::Node(Board* board_state)
 void Node::Order_Children()
 {
     move_eval temp;
-    for (U16 move: legal_moves)
+    for (U16 movement: legal_moves)
     {
-        temp.move = move;
+        temp.movement = movement;
         temp.eval = evaluator->evaluate(board_to_dioble(board_state));
 
         move_eval_arr.push_back(temp);
     }
     std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
+    std::cout << "TIME TO GET ORDERRED NODE CHILDREN" << std::endl;
+    for (move_eval t: move_eval_arr)
+    {
+       std::cout << "CHILD MOVE : " << t.movement << " VAL : " << t.eval << std::endl;
+    }
+    std::cout << "ALL CHILDREN DONE" << std::endl;
+
 }
 
 std::vector<double> board_to_dioble(Board* b)
@@ -72,7 +81,7 @@ double Node::score()
 }
 
 //ADVERSARIAL SEARCH
-void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training=false)
+void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training)
 {
     double alpha = -DBL_MAX;
     double beta = DBL_MAX;
@@ -82,7 +91,7 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     {
         while (search)
         {
-            Node* maxnode = new Node(b);
+            Node* maxnode = this;
             if (maxnode->legal_moves.empty())
             {
                 return;
@@ -90,38 +99,38 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
             maxnode->Order_Children();
             // double maxmove;
             double d;
-            b->do_move(maxnode->move_eval_arr[0].move);
+            b->do_move(maxnode->move_eval_arr[0].movement);
             d = MIN_VAL(b, alpha, beta, 0, cutoff);
             alpha = std::max(alpha, d);
             optimum.eval = d;
-            optimum.move = maxnode->move_eval_arr[0].move;
-            b->undo_last_move(maxnode->move_eval_arr[0].move);
+            optimum.movement = maxnode->move_eval_arr[0].movement;
+            b->undo_last_move(maxnode->move_eval_arr[0].movement);
             for(int j = 1; j < maxnode->move_eval_arr.size(); j++)
             {
-                b->do_move(maxnode->move_eval_arr[j].move);
+                b->do_move(maxnode->move_eval_arr[j].movement);
                 d = MIN_VAL(b, alpha, beta, 0, cutoff);
                 alpha = std::max(alpha, d);
                 
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
-                    optimum.move = maxnode->move_eval_arr[j].move;
+                    optimum.movement = maxnode->move_eval_arr[j].movement;
                 }
-                b->undo_last_move(maxnode->move_eval_arr[j].move);
+                b->undo_last_move(maxnode->move_eval_arr[j].movement);
             }
-            best_move = optimum.move;
+            best_move = optimum.movement;
             ++cutoff;
 
-            // return optimum.move;
+            // return optimum.movement;
         }
         
-        // return optimum.move;
+        // return optimum.movement;
     }
     else
     {
         while (search)
         {
-            Node* minnode = new Node(b);
+            Node* minnode = this;
             if (minnode->legal_moves.empty())
             {
                 return;
@@ -129,30 +138,30 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
             minnode->Order_Children();
             // double maxmove;
             double d;
-            b->do_move(minnode->move_eval_arr[-1].move);
+            b->do_move(minnode->move_eval_arr[-1].movement);
             d = MAX_VAL(b, alpha, beta, 0, cutoff);
             beta = std::min(beta, d);
             optimum.eval = d;
-            optimum.move = minnode->move_eval_arr[-1].move;
-            b->undo_last_move(minnode->move_eval_arr[-1].move);
+            optimum.movement = minnode->move_eval_arr[-1].movement;
+            b->undo_last_move(minnode->move_eval_arr[-1].movement);
             for(int j = 2; j < minnode->move_eval_arr.size()+1; j++)
             {
-                b->do_move(minnode->move_eval_arr[-j].move);
+                b->do_move(minnode->move_eval_arr[-j].movement);
                 d = MAX_VAL(b, alpha, beta, 0, cutoff);
                 beta = std::min(beta, d);
                 
                 if (optimum.eval > d)
                 {
                     optimum.eval = d;
-                    optimum.move = minnode->move_eval_arr[-j].move;
+                    optimum.movement = minnode->move_eval_arr[-j].movement;
                 }
-                b->undo_last_move(minnode->move_eval_arr[-j].move);
+                b->undo_last_move(minnode->move_eval_arr[-j].movement);
             }
             ++cutoff;
-            best_move = optimum.move;
-            // return optimum.move;
+            best_move = optimum.movement;
+            // return optimum.movement;
         }
-        // return optimum.move;
+        // return optimum.movement;
     }
     if (training)
     {
@@ -161,7 +170,7 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     return;
 }
 
-double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
+double Node::MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 {
     Node* maxnode = new Node(b);
     if (maxnode->legal_moves.empty())
@@ -175,7 +184,7 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     maxnode->Order_Children();
     double maxmove;
     double d;
-    b->do_move(maxnode->move_eval_arr[0].move);
+    b->do_move(maxnode->move_eval_arr[0].movement);
     d = MIN_VAL(b, alpha, beta, i+1, cutoff);
     alpha = std::max(alpha, d);
     if (alpha>=beta)
@@ -183,10 +192,10 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
         return d;
     }    
     maxmove = d;
-    b->undo_last_move(maxnode->move_eval_arr[0].move);
+    b->undo_last_move(maxnode->move_eval_arr[0].movement);
     for(int j = 1; j < maxnode->move_eval_arr.size(); j++)
     {
-        b->do_move(maxnode->move_eval_arr[j].move);
+        b->do_move(maxnode->move_eval_arr[j].movement);
         d = MIN_VAL(b, alpha, beta, i+1, cutoff);
         alpha = std::max(alpha, d);
         if (alpha>=beta)
@@ -197,12 +206,12 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
         {
             maxmove = d;
         }
-        b->undo_last_move(maxnode->move_eval_arr[j].move);
+        b->undo_last_move(maxnode->move_eval_arr[j].movement);
     }
     return maxmove;  
 }
 
-double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
+double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 {
     Node* minnode = new Node(b);
     if (minnode->legal_moves.empty())
@@ -216,7 +225,7 @@ double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     minnode->Order_Children();
     double minmove;
     double d;
-    b->do_move(minnode->move_eval_arr[-1].move);
+    b->do_move(minnode->move_eval_arr[-1].movement);
     d = MAX_VAL(b, alpha, beta, i+1, cutoff);
     beta = std::min(beta, d);
     if (alpha>=beta)
@@ -224,10 +233,10 @@ double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
         return d;
     }    
     minmove = d;
-    b->undo_last_move(minnode->move_eval_arr[-1].move);
+    b->undo_last_move(minnode->move_eval_arr[-1].movement);
     for(int j = 2; j < minnode->move_eval_arr.size()+1; j++)
     {
-        b->do_move(minnode->move_eval_arr[-j].move);
+        b->do_move(minnode->move_eval_arr[-j].movement);
         d = MAX_VAL(b, alpha, beta, i+1, cutoff);
         beta = std::min(beta, d);
         if (alpha>=beta)
@@ -238,7 +247,7 @@ double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
         {
             minmove = d;
         }
-        b->undo_last_move(minnode->move_eval_arr[-j].move);
+        b->undo_last_move(minnode->move_eval_arr[-j].movement);
     }
     return minmove;  
 }
