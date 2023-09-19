@@ -9,18 +9,23 @@ double NeuralNetwork::sigmoid_derivative(double x){
     return sigmoid(x)*(1-sigmoid(x));
 }
 
-NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes){
+NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights=true){
     learning_rate = 0.01;
     layer_sizes = hidden_layers_sizes;
     layer_sizes.insert(layer_sizes.begin(), input_size);
     layer_sizes.push_back(1);
+
+    weights = std::vector<std::vector<std::vector<double>>>(layer_sizes.size()-1);
+    biases = std::vector<std::vector<double>>(layer_sizes.size()-1);
+
+    if (!randomize_weights){
+        return;
+    }
     
     std::random_device rd;
     std::mt19937 generator(rd());
     std::normal_distribution<double> normal_random(0,1);
 
-    weights = std::vector<std::vector<std::vector<double>>>(layer_sizes.size()-1);
-    biases = std::vector<std::vector<double>>(layer_sizes.size()-1);
     
     for (int i=0; i<layer_sizes.size()-1; i++){
         weights[i] = std::vector<std::vector<double>>(layer_sizes[i+1], std::vector<double>(layer_sizes[i]));
@@ -87,5 +92,45 @@ void NeuralNetwork::update(std::vector<double> features, double evaluated_output
                 weights[layer][i][j] += learning_rate*errors[layer][i]*outputs[layer][j];
             }
         }
+    }
+}
+
+void NeuralNetwork::load_weights(std::string filename){
+    std::ifstream input_file(filename);
+
+    for (int layer=0; layer<weights.size(); layer++){
+        for (std::vector<double>& row: weights[layer]){
+            for (int i=0; i<row.size(); i++){
+                input_file >> row[i];
+            }
+        }
+    } 
+}
+
+void NeuralNetwork::dump_weights(std::string filename){
+    std::ofstream output_file(filename);
+
+    for (int layer=0; layer<weights.size(); layer++){
+        for (std::vector<double>& row: weights[layer]){
+            for (int i=0; i<row.size(); i++){
+                output_file << row[i] << " ";
+            }
+            output_file << std::endl;
+        }
+        output_file << std::endl;
+    } 
+}
+
+void NeuralNetwork::print_weights(){
+    for (int layer=0; layer<weights.size(); layer++){
+        std::cout << "Weights for layer: " << layer << std::endl;
+
+        for (std::vector<double>& row: weights[layer]){
+            for (double w: row){
+                std::cout << w << " ";
+            }
+            std::cout << "\n";
+        }
+        std::cout << "\n\n";
     }
 }
