@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <vector>
 #include <unordered_set>
 #include <stack>
@@ -78,7 +77,6 @@ struct Board {
     Board* copy() const;
     void do_move(U16 move);
     void undo_last_move(U16 move);
-
     private:
     std::unordered_set<U16> _get_pseudolegal_moves() const;
     std::unordered_set<U16> _get_pseudolegal_moves_for_piece(U8 piece_pos) const;
