@@ -34,6 +34,10 @@ package:
 	cp -r web/dist build/rollerball/web
 	cd build && zip -r rollerball.zip rollerball
 
+test:
+	g++ test.cpp src/neural_network.cpp -o bin/test
+	./bin/test
+
 dbg_frontend: src/debug_frontend.cpp 
 	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/debug_frontend.cpp -o bin/debug_frontend
 
