@@ -25,12 +25,12 @@ public:
     std::vector<move_eval> move_eval_arr; 
 
     Node(Board* board_state, NeuralNetwork* evaluator);
-    void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training);
+    
     double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
     double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);
     void Order_Children();
     double score();
 };
 
-
+void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training, NeuralNetwork* evaluator);
 std::vector<double> board_to_dioble(Board* b);
