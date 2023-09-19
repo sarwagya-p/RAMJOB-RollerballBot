@@ -9,7 +9,7 @@ double NeuralNetwork::sigmoid_derivative(double x){
     return sigmoid(x)*(1-sigmoid(x));
 }
 
-NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights=true){
+NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights){
     learning_rate = 0.01;
     layer_sizes = hidden_layers_sizes;
     layer_sizes.insert(layer_sizes.begin(), input_size);
@@ -17,6 +17,11 @@ NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_size
 
     weights = std::vector<std::vector<std::vector<double>>>(layer_sizes.size()-1);
     biases = std::vector<std::vector<double>>(layer_sizes.size()-1);
+
+    for (int i=0;i<layer_sizes.size()-1; i++){
+        weights[i] = std::vector<std::vector<double>>(layer_sizes[i+1], std::vector<double>(layer_sizes[i]));
+        biases[i] = std::vector<double>(layer_sizes[i+1]);
+    }
 
     if (!randomize_weights){
         return;
@@ -28,15 +33,11 @@ NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_size
 
     
     for (int i=0; i<layer_sizes.size()-1; i++){
-        weights[i] = std::vector<std::vector<double>>(layer_sizes[i+1], std::vector<double>(layer_sizes[i]));
-
         for (int j =0; j<layer_sizes[i+1]; j++){
             for (int k=0; k<layer_sizes[i]; k++){
                 weights[i][j][k] = normal_random(generator);
             }
         }
-
-        biases[i] = std::vector<double>(layer_sizes[i+1]);
 
         for (int j=0; j<layer_sizes[i+1]; j++){
             biases[i][j] = normal_random(generator);
@@ -65,29 +66,27 @@ std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector
 }
 
 double NeuralNetwork::evaluate(std::vector<double> features){
-    // for testing node search
-
-    std::random_device rd;
-    std::mt19937 generator(rd());
-    std::normal_distribution<double> normal_random(0,10);
-    return normal_random(generator) + 100;
-    
     // actual
-    // return forward_prop_outputs(features).back()[0];
+    return forward_prop_outputs(features).back()[0]*100;
     
 }
 
 void NeuralNetwork::update(std::vector<double> features, double evaluated_output){
+    evaluated_output = evaluated_output/100;
     std::vector<std::vector<double>> outputs = forward_prop_outputs(features);
 
     std::vector<std::vector<double>> errors(outputs.size()-1);
+
+    for (int layer=0; layer<errors.size(); layer++){
+        errors[layer] = std::vector<double>(layer_sizes[layer]);
+    }
     errors.back() = {pow(evaluated_output-outputs.back()[0], 2)};
 
-    for (int layer=outputs.size()-3; layer>=0; layer--){
+    for (int layer=errors.size()-2; layer>=0; layer--){
         for (int i=0; i<layer_sizes[layer]; i++){
             double weighted_sum = 0;
-
-            for (int j=0; j<layer_sizes[layer+1]; j++){
+            for (int j=0; j<errors[layer+1].size(); j++){
+                
                 weighted_sum += errors[layer+1][j]*weights[layer][j][i];
             }
 

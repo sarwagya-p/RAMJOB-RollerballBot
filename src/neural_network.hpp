@@ -16,7 +16,7 @@ public:
 
     void print_weights();
 
-private:
+// private:
     std::vector<int> layer_sizes;
     
     double learning_rate;
