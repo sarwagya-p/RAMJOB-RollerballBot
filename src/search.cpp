@@ -27,12 +27,12 @@ void Node::Order_Children()
         move_eval_arr.push_back(temp);
     }
     std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
-    std::cout << "TIME TO GET ORDERRED NODE CHILDREN" << std::endl;
-    for (move_eval t: move_eval_arr)
-    {
-       std::cout << "CHILD MOVE : " << t.movement << " VAL : " << t.eval << std::endl;
-    }
-    std::cout << "ALL CHILDREN DONE" << std::endl;
+    // std::cout << "TIME TO GET ORDERRED NODE CHILDREN" << std::endl;
+    // for (move_eval t: move_eval_arr)
+    // {
+    //    std::cout << "CHILD MOVE : " << t.movement << " VAL : " << t.eval << std::endl;
+    // }
+    // std::cout << "ALL CHILDREN DONE" << std::endl;
 
 }
 
@@ -83,14 +83,15 @@ double Node::score()
 //ADVERSARIAL SEARCH
 void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training)
 {
-    double alpha = -DBL_MAX;
-    double beta = DBL_MAX;
+    
     int cutoff = 1;
     move_eval optimum;
     if (b->data.player_to_play == WHITE)
     {
         while (search)
         {
+            double alpha = -DBL_MAX;
+            double beta = DBL_MAX;
             Node* maxnode = this;
             if (maxnode->legal_moves.empty())
             {
@@ -132,6 +133,8 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
     {
         while (search)
         {
+            double alpha = -DBL_MAX;
+            double beta = DBL_MAX;
             Node* minnode = this;
             if (minnode->legal_moves.empty())
             {
@@ -167,6 +170,7 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
         }
         // return optimum.movement;
     }
+    std::cout << "BLYATTT  " << cutoff << "  SUUUUKAAAA" << std::endl; 
     if (training)
     {
         evaluator->update(board_to_dioble(b), optimum.eval);
