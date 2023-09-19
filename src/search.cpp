@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "search.hpp"
 #include <float.h>
 
@@ -26,6 +27,13 @@ void Node::Order_Children()
         move_eval_arr.push_back(temp);
     }
     std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
+    std::cout << "TIME TO GET ORDERRED NODE CHILDREN" << std::endl;
+    for (move_eval t: move_eval_arr)
+    {
+       std::cout << "CHILD MOVE : " << t.movement << " VAL : " << t.eval << std::endl;
+    }
+    std::cout << "ALL CHILDREN DONE" << std::endl;
+
 }
 
 std::vector<double> board_to_dioble(Board* b)
