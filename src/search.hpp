@@ -3,11 +3,11 @@
 #include "board.hpp"
 #include "engine.hpp"
 #include "neural_network.hpp"
-#include <algorithm>
+// #include <algorithm>
 
 typedef struct move_eval
 {
-    U16 move;
+    U16 movement;
     double eval;
 }move_eval;
 
@@ -31,6 +31,6 @@ public:
 
 NeuralNetwork* evaluator;
 std::vector<double> board_to_dioble(Board* b);
-void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training=false);
+void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training);
 double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
 double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);
