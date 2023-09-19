@@ -104,19 +104,21 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
             alpha = std::max(alpha, d);
             optimum.eval = d;
             optimum.movement = maxnode->move_eval_arr[0].movement;
+            best_move = optimum.movement;
             b->undo_last_move(maxnode->move_eval_arr[0].movement);
             for(int j = 1; j < maxnode->move_eval_arr.size(); j++)
             {
                 b->do_move(maxnode->move_eval_arr[j].movement);
                 d = MIN_VAL(b, alpha, beta, 0, cutoff);
                 alpha = std::max(alpha, d);
-                
+                b->undo_last_move(maxnode->move_eval_arr[j].movement);
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
                     optimum.movement = maxnode->move_eval_arr[j].movement;
+                    best_move = optimum.movement;
                 }
-                b->undo_last_move(maxnode->move_eval_arr[j].movement);
+                
             }
             best_move = optimum.movement;
             ++cutoff;
@@ -138,24 +140,26 @@ void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& be
             minnode->Order_Children();
             // double maxmove;
             double d;
-            b->do_move(minnode->move_eval_arr[-1].movement);
+            b->do_move(minnode->move_eval_arr.end()[-1].movement);
             d = MAX_VAL(b, alpha, beta, 0, cutoff);
             beta = std::min(beta, d);
             optimum.eval = d;
-            optimum.movement = minnode->move_eval_arr[-1].movement;
-            b->undo_last_move(minnode->move_eval_arr[-1].movement);
+            optimum.movement = minnode->move_eval_arr.end()[-1].movement;
+            b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
+            best_move = optimum.movement;
             for(int j = 2; j < minnode->move_eval_arr.size()+1; j++)
             {
-                b->do_move(minnode->move_eval_arr[-j].movement);
+                b->do_move(minnode->move_eval_arr.end()[-j].movement);
                 d = MAX_VAL(b, alpha, beta, 0, cutoff);
                 beta = std::min(beta, d);
-                
+                b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
                 if (optimum.eval > d)
                 {
                     optimum.eval = d;
-                    optimum.movement = minnode->move_eval_arr[-j].movement;
+                    optimum.movement = minnode->move_eval_arr.end()[-j].movement;
+                    best_move = optimum.movement;
                 }
-                b->undo_last_move(minnode->move_eval_arr[-j].movement);
+                
             }
             ++cutoff;
             best_move = optimum.movement;
@@ -225,7 +229,7 @@ double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     minnode->Order_Children();
     double minmove;
     double d;
-    b->do_move(minnode->move_eval_arr[-1].movement);
+    b->do_move(minnode->move_eval_arr.end()[-1].movement);
     d = MAX_VAL(b, alpha, beta, i+1, cutoff);
     beta = std::min(beta, d);
     if (alpha>=beta)
@@ -233,10 +237,10 @@ double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
         return d;
     }    
     minmove = d;
-    b->undo_last_move(minnode->move_eval_arr[-1].movement);
+    b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
     for(int j = 2; j < minnode->move_eval_arr.size()+1; j++)
     {
-        b->do_move(minnode->move_eval_arr[-j].movement);
+        b->do_move(minnode->move_eval_arr.end()[-j].movement);
         d = MAX_VAL(b, alpha, beta, i+1, cutoff);
         beta = std::min(beta, d);
         if (alpha>=beta)
@@ -247,7 +251,7 @@ double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
         {
             minmove = d;
         }
-        b->undo_last_move(minnode->move_eval_arr[-j].movement);
+        b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
     }
     return minmove;  
 }
