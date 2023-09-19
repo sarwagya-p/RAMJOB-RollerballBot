@@ -17,20 +17,19 @@ public:
     Board* board_state;
     int num_moves;
     std::unordered_set<U16> legal_moves;
-
+    NeuralNetwork* evaluator;
     // Node* parent_node;
     // std::vector<Node*> children;
 
     std::vector<move_eval> move_eval_arr; 
 
     Node(Board* board_state);
-
+    void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training);
+    double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
+    double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);
     void Order_Children();
     double score();
 };
 
-NeuralNetwork* evaluator;
+
 std::vector<double> board_to_dioble(Board* b);
-void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training);
-double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
-double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);

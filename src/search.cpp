@@ -73,7 +73,7 @@ double Node::score()
 }
 
 //ADVERSARIAL SEARCH
-void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training)
+void Node::search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training)
 {
     double alpha = -DBL_MAX;
     double beta = DBL_MAX;
@@ -83,7 +83,7 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     {
         while (search)
         {
-            Node* maxnode = new Node(b);
+            Node* maxnode = this;
             if (maxnode->legal_moves.empty())
             {
                 return;
@@ -122,7 +122,7 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     {
         while (search)
         {
-            Node* minnode = new Node(b);
+            Node* minnode = this;
             if (minnode->legal_moves.empty())
             {
                 return;
@@ -162,7 +162,7 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     return;
 }
 
-double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
+double Node::MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 {
     Node* maxnode = new Node(b);
     if (maxnode->legal_moves.empty())
@@ -203,7 +203,7 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     return maxmove;  
 }
 
-double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
+double Node::MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
 {
     Node* minnode = new Node(b);
     if (minnode->legal_moves.empty())
