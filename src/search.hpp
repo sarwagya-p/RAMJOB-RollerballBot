@@ -29,6 +29,7 @@ class Node {
 
 NeuralNetwork* evaluator;
 std::vector<double> board_to_dioble(Board* b);
-U16 search_move(Board* b, bool training=false);
+void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training=false);
 double MAX_VAL(Board* b);
 double MIN_VAL(Board* b);
+double score(Board* b);
