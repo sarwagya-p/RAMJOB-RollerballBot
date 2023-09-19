@@ -13,8 +13,9 @@ typedef struct move_eval
 
 
 class Node {
-    public:
+public:
     Board* board_state;
+    int num_moves;
     std::unordered_set<U16> legal_moves;
 
     // Node* parent_node;
@@ -25,11 +26,11 @@ class Node {
     Node(Board* board_state);
 
     void Order_Children();
+    double score();
 };
 
 NeuralNetwork* evaluator;
 std::vector<double> board_to_dioble(Board* b);
 void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training=false);
-double MAX_VAL(Board* b);
-double MIN_VAL(Board* b);
-double score(Board* b);
+double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
+double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);

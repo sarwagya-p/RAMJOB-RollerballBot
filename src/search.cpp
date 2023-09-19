@@ -9,7 +9,7 @@ struct CompareMoveEval{
 };
 
 Node::Node(Board* board_state) 
-    :board_state(board_state)
+    :board_state(board_state), num_moves(0)
     {
         legal_moves = board_state->get_legal_moves();
     }
@@ -47,9 +47,28 @@ std::vector<double> board_to_dioble(Board* b)
     return dio;
 }
 
-double score(Board* b)
+double Node::score()
 {
-    return 0;
+    bool win, draw, lose;
+    
+    win = board_state->in_check() && (board_state->data.player_to_play >> 6);
+    draw = !board_state->in_check();
+
+    lose = ~draw & ~win;
+    double margin_score = 0;
+    margin_score -= (board_state->data.b_rook_ws != DEAD)*3;
+    margin_score -= (board_state->data.b_rook_bs != DEAD)*3;
+    margin_score -= (board_state->data.b_bishop != DEAD)*5;
+    margin_score -= (board_state->data.b_pawn_ws != DEAD);
+    margin_score -= (board_state->data.b_pawn_bs != DEAD);
+
+    margin_score += (board_state->data.w_rook_ws != DEAD)*3;
+    margin_score += (board_state->data.w_rook_bs != DEAD)*3;
+    margin_score += (board_state->data.w_bishop != DEAD)*5;
+    margin_score += (board_state->data.w_pawn_ws != DEAD);
+    margin_score += (board_state->data.w_pawn_bs != DEAD);
+
+    return margin_score + win * 100 + (lose - win) * (5 * (num_moves/20) + std::min(10, num_moves)) + 40*draw;
 }
 
 //ADVERSARIAL SEARCH
@@ -147,7 +166,7 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     Node* maxnode = new Node(b);
     if (maxnode->legal_moves.empty())
     {
-        return score(b);
+        return maxnode->score();
     }
     if (i == cutoff)
     {
@@ -188,7 +207,7 @@ double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff)
     Node* minnode = new Node(b);
     if (minnode->legal_moves.empty())
     {
-        return score(b);
+        return minnode->score();
     }
     if (i == cutoff)
     {
