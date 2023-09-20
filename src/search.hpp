@@ -42,4 +42,4 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 
 std::vector<double> board_to_dioble(std::shared_ptr<Board> b);
 double get_margin_score(std::shared_ptr<Board> board_state);
-void undo_last_move(Board* b, U16 move);
+void undo_last_move(std::shared_ptr<Board> b, U16 move);
