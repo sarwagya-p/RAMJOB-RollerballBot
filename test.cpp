@@ -1,5 +1,6 @@
 #include <random>
 #include <thread>
+#include <algorithm>
 #include<unistd.h>
 #include "src/search.hpp"
 #include "src/board.hpp"
@@ -58,27 +59,27 @@ void rotate_board1(U8 *src, U8 *tgt, const U8 *transform) {
 }
 
 std::shared_ptr<Board> create_random_board(int num_pieces){
-    std::vector<int> shuffled_pieces= {0,1,3,4,5,6,7,9,10,11};
+    std::vector<int> shuffled_pieces= {6,7};
 
-    for (size_t i=9; i>=num_pieces; i--){
-        std::uniform_int_distribution<size_t> uniform(0, i);
-        size_t j = uniform(rd);
+    // for (size_t i=9; i>=num_pieces; i--){
+    //     std::uniform_int_distribution<size_t> uniform(0, i);
+    //     size_t j = uniform(rd);
 
-        shuffled_pieces.erase(shuffled_pieces.begin()+j);
-    }
-    
+    //     shuffled_pieces.erase(shuffled_pieces.begin()+j);
+    // }
+    shuffled_pieces.push_back(2);
+    shuffled_pieces.push_back(8);
+
     std::cout << "Remaining pieces: ";
 
     for (int x: shuffled_pieces){
         std::cout << x << " ";
     }
     std::cout << std::endl;
-    shuffled_pieces.push_back(2);
-    shuffled_pieces.push_back(8);
 
     std::uniform_int_distribution<size_t> uniform(0, 42);
     std::vector<U8> random_pos;
-    for (int i=0; i<num_pieces+2; i++){
+    while (random_pos.size() < shuffled_pieces.size()){
         U8 random_square = uniform(rd);
         int x, y;
 
@@ -97,6 +98,8 @@ std::shared_ptr<Board> create_random_board(int num_pieces){
             y = (random_square-28)%4;
         }
         U8 p = pos(x, y);
+
+        if (std::find(random_pos.begin(), random_pos.end(), p) != random_pos.end()) continue;
         random_pos.push_back(p);
     }
 
@@ -132,6 +135,7 @@ std::shared_ptr<Board> create_random_board(int num_pieces){
     U8* pieces = (U8*)(&b->data);
 
     for (int i=0; i<shuffled_pieces.size(); i++){
+        std::cout << "Setting piece " << shuffled_pieces[i] << " to pos " << int(random_pos[i]) << std::endl;
         pieces[shuffled_pieces[i]] = random_pos[i];
     }
 
