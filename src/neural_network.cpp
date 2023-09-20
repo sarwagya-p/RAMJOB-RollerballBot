@@ -63,7 +63,7 @@ std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector
             double weighted_sum = biases[layer-1][i];
 
             for (int j=0; j<layer_sizes[layer-1]; j++){
-                weighted_sum += features[j]*weights[layer-1][i][j];
+                weighted_sum += outputs[layer-1][j]*weights[layer-1][i][j];
             }
 
             outputs[layer][i] = sigmoid(weighted_sum);
