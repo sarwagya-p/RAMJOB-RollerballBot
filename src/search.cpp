@@ -4,9 +4,12 @@
 #include <float.h>
 
 struct CompareMoveEval{
+    bool reverse = false;
+
+    CompareMoveEval(bool reverse = false): reverse(reverse){}
     bool operator()(const move_eval mve1, const move_eval mve2)
     {
-        return (mve1.eval > mve2.eval);
+        return (mve1.eval > mve2.eval) != reverse;
     }
 };
 
@@ -17,11 +20,12 @@ Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<NeuralNetwork> ev
         legal_moves = board_state->get_legal_moves();
     }
 
-void Node::Order_Children()
+void Node::Order_Children(std::atomic<bool>& search, bool reverse)
 {
     move_eval temp;
     for (U16 test_move: legal_moves)
     {
+        if (!search) return;
         // std::cout << "Move: " << test_move << std::endl;
         temp.movement = test_move;
         board_state->do_move(test_move);
@@ -30,7 +34,7 @@ void Node::Order_Children()
 
         move_eval_arr.push_back(temp);
     }
-    std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
+    std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval(reverse));
 
     // std::cout << "Move order: " << std::endl;
     // for (move_eval test_move: move_eval_arr){
@@ -114,15 +118,34 @@ double Node::score()
     return margin_score + win * 100 + (lose - win) * (5 * (num_moves/20) + std::min(10, num_moves)) + 40*draw;
 }
 
+double move_and_eval(std::shared_ptr<Board> b, U16 move, int i, int cutoff, double alpha, double beta,
+std::shared_ptr<NeuralNetwork> evaluator, bool to_find_min, std::atomic<bool>& search){
+    if (!search) return 0;
+    b->do_move(move);
+    U8 last_killed_piece_temp = b->data.last_killed_piece;
+    int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
+
+    double d = 0;
+    if (to_find_min){
+        d = MIN_VAL(b, alpha, beta, i, cutoff, search, evaluator);
+    }
+    else {
+        d = MAX_VAL(b, alpha, beta, i, cutoff, search, evaluator);
+    }
+    b->data.last_killed_piece = last_killed_piece_temp;
+    b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
+    b->undo_last_move(move);
+
+    return d;
+}
+
 //ADVERSARIAL SEARCH
 void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
     bool training, std::shared_ptr<NeuralNetwork> evaluator)
 {
-    
     int cutoff = 1;
-    U8 last_killed_piece_temp;
-    int last_killed_piece_idx_temp;
     move_eval optimum;
+
     if (b->data.player_to_play == WHITE)
     {
         // std::cout << "Checking white search" << std::endl;
@@ -141,48 +164,33 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // {
             //     return;
             // }
-            maxnode->Order_Children();
+            maxnode->Order_Children(search, true);
             // std::cout << "LEGALS OREDERRED: " << std::endl;
             // for (move_eval test_move: maxnode->move_eval_arr){
             //     std::cout << test_move.movement << " ";
             // }
             // std::cout << std::endl;
             // double maxmove;
-            double d;
-            b->do_move(maxnode->move_eval_arr[0].movement);
-            last_killed_piece_temp = b->data.last_killed_piece;
-            last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-            d = MIN_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
-            b->data.last_killed_piece = last_killed_piece_temp;
-            b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-            b->undo_last_move(maxnode->move_eval_arr[0].movement);
+            double d = move_and_eval(b, maxnode->move_eval_arr[0].movement, 0, cutoff, 
+            alpha, beta, evaluator, true, search);
+            if (!search) return;
             alpha = std::max(alpha, d);
-            if (!search)
-            {
-                break;
-            }
-            optimum.eval = d;
-            optimum.movement = maxnode->move_eval_arr[0].movement;
             
-            std::cout << "SETTING : " << optimum.movement << std::endl;
-            best_move = optimum.movement;
-            std::cout << "SET AT : " << cutoff << std::endl;
+            optimum.eval = -DBL_MAX;
+            // optimum.movement = maxnode->move_eval_arr[0].movement;
             
-            for(size_t j = 1; j < maxnode->move_eval_arr.size(); j++)
+            // std::cout << "SETTING : " << optimum.movement << std::endl;
+            // best_move = optimum.movement;
+            // std::cout << "SET AT : " << cutoff << std::endl;
+            
+            for(size_t j = 0; j < maxnode->move_eval_arr.size(); j++)
             {
-                b->do_move(maxnode->move_eval_arr[j].movement);
-                last_killed_piece_temp = b->data.last_killed_piece;
-                last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-                d = MIN_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
-                b->data.last_killed_piece = last_killed_piece_temp;
-                b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-                b->undo_last_move(maxnode->move_eval_arr[j].movement);
+                d = move_and_eval(b, maxnode->move_eval_arr[j].movement, 0, cutoff,
+                alpha, beta, evaluator, true, search);
+                if (!search) return;
+
                 alpha = std::max(alpha, d);
                 
-                if (!search)
-                {
-                    break;
-                }
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
@@ -215,47 +223,32 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // {
             //     return;
             // }
-            minnode->Order_Children();
+            minnode->Order_Children(search, true);
             // double maxmove;
-            double d;
-            b->do_move(minnode->move_eval_arr.end()[-1].movement);
-            last_killed_piece_temp = b->data.last_killed_piece;
-            last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-            d = MAX_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
-            U8 last_killed_piece_temp = b->data.last_killed_piece;
-            int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-            b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
+            double d = move_and_eval(b, minnode->move_eval_arr[0].movement, 0, cutoff,
+                alpha, beta, evaluator, false, search);
+            if (!search) return;
             beta = std::min(beta, d);
-            if (!search)
-            {
-                break;
-            }
-            optimum.eval = d;
-            optimum.movement = minnode->move_eval_arr.end()[-1].movement;
+
+            optimum.eval = DBL_MAX;
+            // optimum.movement = minnode->move_eval_arr.end()[-1].movement;
             
             
-            std::cout << "SETTING : " << optimum.movement << std::endl;
-            best_move = optimum.movement;
-            std::cout << "SET AT : " << cutoff << std::endl;
-            for(size_t j = 2; j < minnode->move_eval_arr.size()+1; j++)
+            // std::cout << "SETTING : " << optimum.movement << std::endl;
+            // best_move = optimum.movement;
+            // std::cout << "SET AT : " << cutoff << std::endl;
+            for(size_t j = 0; j < minnode->move_eval_arr.size(); j++)
             {
-                b->do_move(minnode->move_eval_arr.end()[-j].movement);
-                last_killed_piece_temp = b->data.last_killed_piece;
-                last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-                d = MAX_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
-                b->data.last_killed_piece = last_killed_piece_temp;
-                b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-                b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
+                double d = move_and_eval(b, minnode->move_eval_arr[j].movement, 0, cutoff,
+                alpha, beta, evaluator, false, search);
+
+                if (!search) return;
                 beta = std::min(beta, d);
-                
-                if (!search)
-                {
-                    break;
-                }
+
                 if (optimum.eval > d)
                 {
                     optimum.eval = d;
-                    optimum.movement = minnode->move_eval_arr.end()[-j].movement;
+                    optimum.movement = minnode->move_eval_arr[j].movement;
                     // if (!search)
                     // {
                     //     return;
@@ -288,10 +281,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
     std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator)
 {
-    if (!search)
-    {
-        return 0;
-    }
+    if (!search) return 0;
     std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
     if (maxnode->legal_moves.empty())
     {
@@ -301,32 +291,28 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     {
         return evaluator->evaluate(board_to_dioble(b));
     }
-    maxnode->Order_Children();
-    double maxmove;
-    double d;
-    b->do_move(maxnode->move_eval_arr[0].movement);
-    U8 last_killed_piece_temp = b->data.last_killed_piece;
-    int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-    d = MIN_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
-    b->data.last_killed_piece = last_killed_piece_temp;
-    b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-    b->undo_last_move(maxnode->move_eval_arr[0].movement);
-    alpha = std::max(alpha, d);
-    if (alpha>=beta)
-    {
-        return d;
-    }    
-    maxmove = d;
+    maxnode->Order_Children(search);
+    if (!search) return 0;
     
-    for(size_t j = 1; j < maxnode->move_eval_arr.size(); j++)
+    double maxmove = -DBL_MAX;
+    double d;
+    // double d = move_and_eval(b, maxnode->move_eval_arr[0].movement, i+1, cutoff,
+    // alpha, beta, evaluator, true, search);
+    // if (!search) return 0;
+
+    // alpha = std::max(alpha, d);
+    // if (alpha>=beta)
+    // {
+    //     return d;
+    // }    
+    // maxmove = d;
+    
+    for(size_t j = 0; j < maxnode->move_eval_arr.size(); j++)
     {
-        b->do_move(maxnode->move_eval_arr[j].movement);
-        last_killed_piece_temp = b->data.last_killed_piece;
-        last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-        d = MIN_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
-        b->data.last_killed_piece = last_killed_piece_temp;
-        b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-        b->undo_last_move(maxnode->move_eval_arr[j].movement);
+        d = move_and_eval(b, maxnode->move_eval_arr[j].movement, i+1, cutoff,
+        alpha, beta, evaluator, true, search);
+        if (!search) return 0;
+
         alpha = std::max(alpha, d);
         if (alpha>=beta)
         {
@@ -343,10 +329,8 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
     std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator)
 {
-    if (!search)
-    {
-        return 0;
-    }
+    if (!search) return 0;
+
     std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
     if (minnode->legal_moves.empty())
     {
@@ -356,32 +340,31 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     {
         return evaluator->evaluate(board_to_dioble(b));
     }
-    minnode->Order_Children();
-    double minmove;
+    minnode->Order_Children(search, true);
+    if (!search) return 0;
+
+    double minmove = DBL_MAX;
     double d;
-    b->do_move(minnode->move_eval_arr.end()[-1].movement);
-    U8 last_killed_piece_temp = b->data.last_killed_piece;
-    int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-    d = MAX_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
-    b->data.last_killed_piece = last_killed_piece_temp;
-    b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-    b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
-    beta = std::min(beta, d);
-    if (alpha>=beta)
-    {
-        return d;
-    }    
-    minmove = d;
+    // b->do_move(minnode->move_eval_arr.end()[-1].movement);
+    // U8 last_killed_piece_temp = b->data.last_killed_piece;
+    // int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
+    // d = MAX_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
+    // b->data.last_killed_piece = last_killed_piece_temp;
+    // b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
+    // b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
+    // beta = std::min(beta, d);
+    // if (alpha>=beta)
+    // {
+    //     return d;
+    // }    
+    // minmove = d;
     
-    for(size_t j = 2; j < minnode->move_eval_arr.size()+1; j++)
+    for(size_t j = 0; j < minnode->move_eval_arr.size(); j++)
     {
-        b->do_move(minnode->move_eval_arr.end()[-j].movement);
-        last_killed_piece_temp = b->data.last_killed_piece;
-        last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-        d = MAX_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
-        b->data.last_killed_piece = last_killed_piece_temp;
-        b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-        b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
+        d = move_and_eval(b, minnode->move_eval_arr[j].movement, i+1, cutoff,
+        alpha, beta, evaluator, false, search);
+        if (!search) return 0;
+
         beta = std::min(beta, d);
         if (alpha>=beta)
         {

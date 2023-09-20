@@ -28,7 +28,7 @@ public:
     Node(std::shared_ptr<Board> board_state, std::shared_ptr<NeuralNetwork> evaluator);
     
     
-    void Order_Children();
+    void Order_Children(std::atomic<bool>& search, bool reverse = false);
     double score();
 };
 double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
