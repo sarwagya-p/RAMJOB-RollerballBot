@@ -6,7 +6,7 @@
 #include "board.hpp"
 #include "engine.hpp"
 
-static NeuralNetwork* evaluator = new NeuralNetwork(12, {10, 10});
+static NeuralNetwork* evaluator = new NeuralNetwork(25, {10, 10});
 
 void Engine::find_best_move(const Board& b) {
 

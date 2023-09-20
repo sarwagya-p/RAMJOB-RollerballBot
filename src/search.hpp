@@ -34,3 +34,4 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atom
 double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator);
 void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training, NeuralNetwork* evaluator);
 std::vector<double> board_to_dioble(Board* b);
+double get_margin_score(Board* board_state);
