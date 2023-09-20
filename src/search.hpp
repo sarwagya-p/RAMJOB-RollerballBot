@@ -6,7 +6,7 @@
 
 // #include <algorithm>
 
-typedef struct move_eval
+typedef struct
 {
     U16 movement;
     double eval;
@@ -26,11 +26,12 @@ public:
 
     Node(Board* board_state, NeuralNetwork* evaluator);
     
-    double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff);
-    double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff);
+    
     void Order_Children();
     double score();
 };
-
+double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator);
+double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator);
 void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training, NeuralNetwork* evaluator);
 std::vector<double> board_to_dioble(Board* b);
+double get_margin_score(Board* board_state);

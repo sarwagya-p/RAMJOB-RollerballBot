@@ -6,12 +6,24 @@
 #include "board.hpp"
 #include "engine.hpp"
 
-static NeuralNetwork* evaluator = new NeuralNetwork(12, {10, 10});
+static NeuralNetwork* evaluator = new NeuralNetwork(25, {10, 10});
 
 void Engine::find_best_move(const Board& b) {
 
     Board* board_state = b.copy();
+    
     std::cout << "Calling from Engine" << std::endl;
+    // std::cout << "LEGALS: " << std::endl;
+    // for (U16 test_move: b.get_legal_moves()){
+    //     std::cout << test_move << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "LEGALS COPY: " << std::endl;
+    // for (U16 test_move: board_state->get_legal_moves()){
+    //     std::cout << test_move << " ";
+    // }
+    // std::cout << std::endl;
+
     search_move(board_state, this->search, this->best_move, false, evaluator);
 
     // pick a random move

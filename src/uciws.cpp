@@ -134,6 +134,12 @@ void UCIWSServer::on_stop() {
     auto legal_moves = b.get_legal_moves();
 
     assert(legal_moves.size() > 0);
+    std::cout << "ONSTOP : " << move << std::endl;
+    std::cout << "LEGAL MOVES: " << std::endl;
+    for (U16 test_move: legal_moves){
+        std::cout << test_move << " ";
+    }
+    std::cout << std::endl;
     assert(legal_moves.count(move) > 0);
     b.do_move(move);
 
