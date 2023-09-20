@@ -133,7 +133,7 @@ std::vector<double> board_to_dioble(std::shared_ptr<Board> b)
 
 double get_margin_score(std::shared_ptr<Board> board_state)
 {
-    double margin_score;
+    double margin_score = 0;
     margin_score -= (board_state->data.b_rook_ws != DEAD)*3;
     margin_score -= (board_state->data.b_rook_bs != DEAD)*3;
     margin_score -= (board_state->data.b_bishop != DEAD)*5;
