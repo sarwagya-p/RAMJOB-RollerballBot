@@ -230,27 +230,24 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             
             for(size_t j = 0; j < maxnode->move_eval_arr.size(); j++)
             {
-                std::cout << "Checking move: " << int(maxnode->move_eval_arr[j].movement) << std::endl;
                 d = move_and_eval(b, maxnode->move_eval_arr[j].movement, 0, cutoff,
                 alpha, beta, evaluator, true, search);
                 if (!search) return;
-
-                std::cout << "Evaluation: " << d << "vs prev calculated: " << maxnode->move_eval_arr[j].eval << std::endl;
                 alpha = std::max(alpha, d);
                 
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
                     optimum.movement = maxnode->move_eval_arr[j].movement;
-                    std::cout << "SETTING : " << optimum.movement << std::endl;
+                    // std::cout << "SETTING : " << optimum.movement << std::endl;
                     best_move = optimum.movement;
-                    std::cout << "SET AT : " << cutoff << std::endl;
+                    // std::cout << "SET AT : " << cutoff << std::endl;
                 }
                 
             }
-            // std::cout << "SETTING : " << optimum.movement << std::endl;
-            // best_move = optimum.movement;
-            // std::cout << "SET AT : " << cutoff << std::endl;
+            std::cout << "SETTING : " << optimum.movement << std::endl;
+            best_move = optimum.movement;
+            std::cout << "SET AT : " << cutoff << std::endl;
             ++cutoff;
             // return optimum.movement;
         }
@@ -291,10 +288,8 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // std::cout << "SET AT : " << cutoff << std::endl;
             for(size_t j = 0; j < minnode->move_eval_arr.size(); j++)
             {
-                std::cout << "Checking move: " << int(minnode->move_eval_arr[j].movement) << std::endl;
                 double d = move_and_eval(b, minnode->move_eval_arr[j].movement, 0, cutoff,
                 alpha, beta, evaluator, false, search);
-                std::cout << "Evaluation: " << d  << "vs prev calculated: " << minnode->move_eval_arr[j].eval<< std::endl;
                 if (!search) return;
                 beta = std::min(beta, d);
 
@@ -306,16 +301,16 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                     // {
                     //     return;
                     // }
-                    std::cout << "SETTING : " << optimum.movement << std::endl;
+                    // std::cout << "SETTING : " << optimum.movement << std::endl;
                     best_move = optimum.movement;
-                    std::cout << "SET AT : " << cutoff << std::endl;
+                    // std::cout << "SET AT : " << cutoff << std::endl;
                 }
                 
             }
             ++cutoff;
-            // std::cout << "SETTING : " << optimum.movement << std::endl;
-            // best_move = optimum.movement;
-            // std::cout << "SET AT : " << cutoff << std::endl;
+            std::cout << "SETTING : " << optimum.movement << std::endl;
+            best_move = optimum.movement;
+            std::cout << "SET AT : " << cutoff << std::endl;
             // return optimum.movement;
         }
         // return optimum.movement;

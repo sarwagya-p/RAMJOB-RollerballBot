@@ -101,6 +101,20 @@ std::shared_ptr<Board> create_random_board(int num_pieces){
     }
 
     std::shared_ptr<Board> b = std::shared_ptr<Board>(new Board());
+    b->data.board_0[b->data.b_rook_ws]  = 0;
+    b->data.board_0[b->data.b_rook_bs]  = 0;
+    b->data.board_0[b->data.b_king   ]  = 0;
+    b->data.board_0[b->data.b_bishop ]  = 0;
+    b->data.board_0[b->data.b_pawn_ws]  = 0;
+    b->data.board_0[b->data.b_pawn_bs]  = 0;
+
+    b->data.board_0[b->data.w_rook_ws]  = 0;
+    b->data.board_0[b->data.w_rook_bs]  = 0;
+    b->data.board_0[b->data.w_king   ]  = 0;
+    b->data.board_0[b->data.w_bishop ]  = 0;
+    b->data.board_0[b->data.w_pawn_ws]  = 0;
+    b->data.board_0[b->data.w_pawn_bs]  = 0;
+
     b->data.b_rook_ws  = DEAD;
     b->data.b_rook_bs  = DEAD;
     b->data.b_king     = DEAD;
@@ -154,34 +168,38 @@ void player(std::shared_ptr<Board> board, std::atomic<bool>& search, std::atomic
 }
 
 void train(int num_pieces){
-    std::shared_ptr<Board> board = std::shared_ptr<Board>(new Board());
+    std::shared_ptr<Board> board = create_random_board(2);
 
-    std::cout << board_to_str((U8*)board.get()) << std::endl;
+    std::cout << board_to_str(board->data.board_0) << std::endl;
     std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, true, true));
     std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, true, false));
 
 
-    std::atomic<bool> a_search=true, b_search=true, stop=false;
+    std::atomic<bool> a_search(true), b_search(true), stop(false);
     std::atomic<U16> best_move_a, best_move_b;
 
     bool train_a = true, train_b = false;
 
-    // while (board->get_legal_moves().size() > 0){
-    //     // std::cout << "Doing move" << std::endl;
-    //     if (board->data.player_to_play == WHITE){
-    //         search_move(board, a_search, best_move_a, true, a);
-    //         std::cout << "Doing move." << std::endl;
-    //         board->do_move(best_move_a);
-    //     }
-    //     else{
-    //         search_move(board, b_search, best_move_b, false, b);
-    //         board->do_move(best_move_b);
-    //     }
-    // }
+    while (board->get_legal_moves().size() > 0){
+        // std::cout << "Doing move" << std::endl;
+        if (board->data.player_to_play == WHITE){
+            search_move(board, a_search, best_move_a, true, a);
+            std::cout << "Doing move." << std::endl;
+            board->do_move(best_move_a);
+        }
+        else{
+            search_move(board, b_search, best_move_b, false, b);
+            board->do_move(best_move_b);
+        }
+    }
     std::cout << "Stopping, since legal_moves = " << board->get_legal_moves().size() << std::endl;
+    std::cout << "Dumping weights" << std::endl;
+
+    a->dump_weights("data/weights.txt");
     stop = true;
 }
 
 int main(){
+    for (int i=0; i<3; i++)
     train(2);
 }
