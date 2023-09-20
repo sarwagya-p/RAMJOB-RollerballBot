@@ -3,6 +3,50 @@
 #include "search.hpp"
 #include <float.h>
 
+constexpr U8 cw_90[64] = {
+    48, 40, 32, 24, 16, 8,  0,  7,
+    49, 41, 33, 25, 17, 9,  1,  15,
+    50, 42, 18, 19, 20, 10, 2,  23,
+    51, 43, 26, 27, 28, 11, 3,  31,
+    52, 44, 34, 35, 36, 12, 4,  39,
+    53, 45, 37, 29, 21, 13, 5,  47,
+    54, 46, 38, 30, 22, 14, 6,  55,
+    56, 57, 58, 59, 60, 61, 62, 63
+};
+
+constexpr U8 acw_90[64] = {
+     6, 14, 22, 30, 38, 46, 54, 7,
+     5, 13, 21, 29, 37, 45, 53, 15,
+     4, 12, 18, 19, 20, 44, 52, 23,
+     3, 11, 26, 27, 28, 43, 51, 31,
+     2, 10, 34, 35, 36, 42, 50, 39,
+     1,  9, 17, 25, 33, 41, 49, 47,
+     0,  8, 16, 24, 32, 40, 48, 55,
+    56, 57, 58, 59, 60, 61, 62, 63
+};
+
+constexpr U8 cw_180[64] = {
+    54, 53, 52, 51, 50, 49, 48, 7,
+    46, 45, 44, 43, 42, 41, 40, 15,
+    38, 37, 18, 19, 20, 33, 32, 23,
+    30, 29, 26, 27, 28, 25, 24, 31,
+    22, 21, 34, 35, 36, 17, 16, 39,
+    14, 13, 12, 11, 10,  9,  8, 47,
+     6,  5,  4,  3,  2,  1,  0, 55,
+    56, 57, 58, 59, 60, 61, 62, 63
+};
+
+constexpr U8 id[64] = {
+     0,  1,  2,  3,  4,  5,  6,  7,
+     8,  9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29, 30, 31,
+    32, 33, 34, 35, 36, 37, 38, 39,
+    40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55,
+    56, 57, 58, 59, 60, 61, 62, 63
+};
+
 struct CompareMoveEval{
     bool operator()(const move_eval mve1, const move_eval mve2)
     {
@@ -26,7 +70,7 @@ void Node::Order_Children()
         temp.movement = test_move;
         board_state->do_move(test_move);
         temp.eval = evaluator->evaluate(board_to_dioble(board_state));
-        board_state->undo_last_move(test_move);
+        undo_last_move(board_state, test_move);
 
         move_eval_arr.push_back(temp);
     }
@@ -155,7 +199,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             d = MIN_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
             b->data.last_killed_piece = last_killed_piece_temp;
             b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-            b->undo_last_move(maxnode->move_eval_arr[0].movement);
+            undo_last_move(b, maxnode->move_eval_arr[0].movement);
             alpha = std::max(alpha, d);
             if (!search)
             {
@@ -176,7 +220,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                 d = MIN_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
                 b->data.last_killed_piece = last_killed_piece_temp;
                 b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-                b->undo_last_move(maxnode->move_eval_arr[j].movement);
+                undo_last_move(b, maxnode->move_eval_arr[j].movement);
                 alpha = std::max(alpha, d);
                 
                 if (!search)
@@ -224,7 +268,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             d = MAX_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
             U8 last_killed_piece_temp = b->data.last_killed_piece;
             int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-            b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
+            undo_last_move(b, minnode->move_eval_arr.end()[-1].movement);
             beta = std::min(beta, d);
             if (!search)
             {
@@ -245,7 +289,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                 d = MAX_VAL(b, alpha, beta, 0, cutoff, search, evaluator);
                 b->data.last_killed_piece = last_killed_piece_temp;
                 b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-                b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
+                undo_last_move(b, minnode->move_eval_arr.end()[-j].movement);
                 beta = std::min(beta, d);
                 
                 if (!search)
@@ -310,7 +354,7 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     d = MIN_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
     b->data.last_killed_piece = last_killed_piece_temp;
     b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-    b->undo_last_move(maxnode->move_eval_arr[0].movement);
+    undo_last_move(b, maxnode->move_eval_arr[0].movement);
     alpha = std::max(alpha, d);
     if (alpha>=beta)
     {
@@ -326,7 +370,7 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
         d = MIN_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
         b->data.last_killed_piece = last_killed_piece_temp;
         b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-        b->undo_last_move(maxnode->move_eval_arr[j].movement);
+        undo_last_move(b, maxnode->move_eval_arr[j].movement);
         alpha = std::max(alpha, d);
         if (alpha>=beta)
         {
@@ -365,7 +409,7 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     d = MAX_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
     b->data.last_killed_piece = last_killed_piece_temp;
     b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-    b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
+    undo_last_move(b, minnode->move_eval_arr.end()[-1].movement);
     beta = std::min(beta, d);
     if (alpha>=beta)
     {
@@ -381,7 +425,7 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
         d = MAX_VAL(b, alpha, beta, i+1, cutoff, search, evaluator);
         b->data.last_killed_piece = last_killed_piece_temp;
         b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
-        b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
+        undo_last_move(b, minnode->move_eval_arr.end()[-j].movement);
         beta = std::min(beta, d);
         if (alpha>=beta)
         {
@@ -394,4 +438,50 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
         
     }
     return minmove;  
+}
+
+
+
+void undo_last_move(Board* b, U16 move)
+{
+    U8 p0 = getp0(move);
+    U8 p1 = getp1(move);
+    U8 promo = getpromo(move);
+
+    U8 piecetype = b->data.board_0[p1];
+    U8 deadpiece = b->data.last_killed_piece;
+    b->data.last_killed_piece = 0;
+
+    // scan and get piece from coord
+    U8 *pieces = (U8*)(&(b->data));
+    for (int i=0; i<12; i++) {
+        if (pieces[i] == p1) {
+            pieces[i] = p0;
+            break;
+        }
+    }
+    if (b->data.last_killed_piece_idx >= 0) {
+        pieces[b->data.last_killed_piece_idx] = p1;
+        b->data.last_killed_piece_idx = -1;
+    }
+
+    if (promo == PAWN_ROOK) {
+        piecetype = ((piecetype & (WHITE | BLACK)) ^ ROOK) | PAWN;
+    }
+    else if (promo == PAWN_BISHOP) {
+        piecetype = ((piecetype & (WHITE | BLACK)) ^ BISHOP) | PAWN;
+    }
+
+    b->data.board_0[p0]           = piecetype;
+    b->data.board_90[cw_90[p0]]   = piecetype;
+    b->data.board_180[cw_180[p0]] = piecetype;
+    b->data.board_270[acw_90[p0]] = piecetype;
+
+    b->data.board_0[p1]           = deadpiece;
+    b->data.board_90[cw_90[p1]]   = deadpiece;
+    b->data.board_180[cw_180[p1]] = deadpiece;
+    b->data.board_270[acw_90[p1]] = deadpiece;
+
+
+    b->data.player_to_play = (PlayerColor)(b->data.player_to_play ^ (WHITE | BLACK));
 }
