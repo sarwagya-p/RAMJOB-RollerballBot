@@ -6,8 +6,8 @@
 
 std::mt19937 rd;
 
-Board* create_random_board(int num_pieces){
-    Board* b = new Board();
+std::shared_ptr<Board> create_random_board(int num_pieces){
+    std::shared_ptr<Board> b = std::shared_ptr<Board>(new Board());
     b->data = {DEAD, DEAD, DEAD, DEAD, DEAD, DEAD, DEAD, DEAD, DEAD, DEAD, DEAD, DEAD};
 
     std::vector<int> shuffled_pieces= {0,1,3,4,5,6,7,9,10,11};
@@ -60,8 +60,8 @@ Board* create_random_board(int num_pieces){
     return b;
 }
 
-void player(Board* board, std::atomic<bool>& search, std::atomic<bool>& stop, std::atomic<U16>& best_move,
-        NeuralNetwork* evaluator, bool training){
+void player(std::shared_ptr<Board> board, std::atomic<bool>& search, std::atomic<bool>& stop, std::atomic<U16>& best_move,
+        std::shared_ptr<NeuralNetwork> evaluator, bool training){
     while (!stop){
         if (search){
             if (training) std::cout << "Getting move from a" << std::endl;
@@ -72,41 +72,33 @@ void player(Board* board, std::atomic<bool>& search, std::atomic<bool>& stop, st
 }
 
 void train(int num_pieces){
-    Board* board = new Board();
+    std::shared_ptr<Board> board = std::shared_ptr<Board>(new Board());
 
-    std::cout << board_to_str((U8*)board) << std::endl;
-    NeuralNetwork* a = new NeuralNetwork(24, {10}, true, true);
-    NeuralNetwork* b = new NeuralNetwork(24, {10}, true, false);
+    std::cout << board_to_str((U8*)board.get()) << std::endl;
+    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, true, true));
+    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, true, false));
 
-    std::atomic<bool> a_search=false, b_search=false, stop=false;
+    a->print_weights();
+
+    std::atomic<bool> a_search=true, b_search=true, stop=false;
     std::atomic<U16> best_move_a, best_move_b;
 
     bool train_a = true, train_b = false;
-    std::thread player_a_thread(&player, board, std::ref(a_search), std::ref(stop), std::ref(best_move_a), a, true);
-    std::thread player_b_thread(&player, board, std::ref(b_search), std::ref(stop), std::ref(best_move_b), b, false);
 
     while (board->get_legal_moves().size() > 0){
-        std::cout << "Doing move" << std::endl;
+        // std::cout << "Doing move" << std::endl;
         if (board->data.player_to_play == WHITE){
-            a_search = true;
-            sleep(4);
-            a_search = false;
-            
+            search_move(board, a_search, best_move_a, true, a);
             std::cout << "Doing move." << std::endl;
             board->do_move(best_move_a);
         }
         else{
-            b_search = true;
-            sleep(4);
-            b_search = false;
-
+            search_move(board, b_search, best_move_b, false, b);
             board->do_move(best_move_b);
         }
     }
     std::cout << "Stopping, since legal_moves = " << board->get_legal_moves().size() << std::endl;
     stop = true;
-    player_a_thread.join();
-    player_b_thread.join();
 }
 
 int main(){

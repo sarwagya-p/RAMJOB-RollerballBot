@@ -83,13 +83,14 @@ void NeuralNetwork::update(std::vector<double> features, double evaluated_output
     std::vector<std::vector<double>> outputs = forward_prop_outputs(features);
 
     std::vector<std::vector<double>> errors(outputs.size()-1);
-
+    std::cout << "Checkpoint 1" << std::endl;
     for (size_t layer=0; layer<errors.size(); layer++){
         errors[layer] = std::vector<double>(layer_sizes[layer]);
     }
     errors.back() = {pow(evaluated_output-outputs.back()[0], 2)};
-
-    for (size_t layer=errors.size()-2; layer>=0; layer--){
+    std::cout << "Checkpoint 2" << std::endl;
+    for (int layer=errors.size()-2; layer>=0; --layer){
+        std::cout << "Layer: " << layer << std::endl;
         for (int i=0; i<layer_sizes[layer]; i++){
             double weighted_sum = 0;
             for (size_t j=0; j<errors[layer+1].size(); j++){
@@ -100,7 +101,7 @@ void NeuralNetwork::update(std::vector<double> features, double evaluated_output
             errors[layer][i] = weighted_sum;
         }
     }
-
+    std::cout << "Checkpoint 3" << std::endl;
     for (size_t layer=0; layer<weights.size(); layer++){
         for (size_t i=0; i<weights[layer].size(); i++){
             for (size_t j=0; j<weights[layer][i].size(); j++){
@@ -108,6 +109,7 @@ void NeuralNetwork::update(std::vector<double> features, double evaluated_output
             }
         }
     }
+    std::cout << "Checkpoint 4" << std::endl;
 }
 
 void NeuralNetwork::load_weights(std::string filename){

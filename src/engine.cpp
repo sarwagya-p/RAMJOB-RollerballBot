@@ -1,16 +1,17 @@
 #include <algorithm>
 #include <random>
 #include <iostream>
+#include <memory>
 
 #include "search.hpp"
 #include "board.hpp"
 #include "engine.hpp"
 
-static NeuralNetwork* evaluator = new NeuralNetwork(25, {10, 10});
+static std::shared_ptr<NeuralNetwork> evaluator = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "data/weights.txt"));
 
 void Engine::find_best_move(const Board& b) {
 
-    Board* board_state = b.copy();
+    std::shared_ptr<Board> board_state = std::shared_ptr<Board>(b.copy());
     
     std::cout << "Calling from Engine" << std::endl;
     // std::cout << "LEGALS: " << std::endl;
@@ -24,7 +25,7 @@ void Engine::find_best_move(const Board& b) {
     // }
     // std::cout << std::endl;
 
-    search_move(board_state, this->search, this->best_move, false, evaluator);
+    search_move(board_state, search, best_move, false, evaluator);
 
     // pick a random move
     

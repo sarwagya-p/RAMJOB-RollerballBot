@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 #include "neural_network.hpp"
 #include "board.hpp"
@@ -15,23 +16,29 @@ typedef struct
 
 class Node {
 public:
-    Board* board_state;
+    std::shared_ptr<Board> board_state;
     int num_moves;
     std::unordered_set<U16> legal_moves;
-    NeuralNetwork* evaluator;
+    std::shared_ptr<NeuralNetwork> evaluator;
     // Node* parent_node;
     // std::vector<Node*> children;
 
     std::vector<move_eval> move_eval_arr; 
 
-    Node(Board* board_state, NeuralNetwork* evaluator);
+    Node(std::shared_ptr<Board> board_state, std::shared_ptr<NeuralNetwork> evaluator);
     
     
     void Order_Children();
     double score();
 };
-double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator);
-double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator);
-void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training, NeuralNetwork* evaluator);
-std::vector<double> board_to_dioble(Board* b);
-double get_margin_score(Board* board_state);
+double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
+    std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator);
+
+double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
+    std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator);
+
+void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
+    bool training, std::shared_ptr<NeuralNetwork> evaluator);
+
+std::vector<double> board_to_dioble(std::shared_ptr<Board> b);
+double get_margin_score(std::shared_ptr<Board> board_state);

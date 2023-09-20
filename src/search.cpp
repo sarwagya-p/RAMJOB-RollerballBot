@@ -10,7 +10,7 @@ struct CompareMoveEval{
     }
 };
 
-Node::Node(Board* board_state, NeuralNetwork* evaluator) 
+Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<NeuralNetwork> evaluator) 
     :board_state(board_state), evaluator(evaluator)
     {
         num_moves = 0;
@@ -46,7 +46,7 @@ void Node::Order_Children()
 
 }
 
-std::vector<double> board_to_dioble(Board* b)
+std::vector<double> board_to_dioble(std::shared_ptr<Board> b)
 {
     std::vector<double> dio = std::vector<double>(25);
     dio[0] = (double)getx(b->data.b_rook_ws);
@@ -83,7 +83,7 @@ std::vector<double> board_to_dioble(Board* b)
     return dio;
 }
 
-double get_margin_score(Board* board_state)
+double get_margin_score(std::shared_ptr<Board> board_state)
 {
     double margin_score;
     margin_score -= (board_state->data.b_rook_ws != DEAD)*3;
@@ -115,7 +115,8 @@ double Node::score()
 }
 
 //ADVERSARIAL SEARCH
-void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_move, bool training, NeuralNetwork* evaluator)
+void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
+    bool training, std::shared_ptr<NeuralNetwork> evaluator)
 {
     
     int cutoff = 1;
@@ -125,12 +126,12 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     if (b->data.player_to_play == WHITE)
     {
         // std::cout << "Checking white search" << std::endl;
-        while (search)
+        while (search && cutoff < 6)
         {
             // std::cout << "Cutoff: " << cutoff << std::endl;
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
-            Node* maxnode = new Node(b, evaluator);
+            std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
             std::cout << "LEGALS: " << std::endl;
             for (U16 test_move: maxnode->legal_moves){
                 std::cout << test_move << " ";
@@ -156,10 +157,10 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
             b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
             b->undo_last_move(maxnode->move_eval_arr[0].movement);
             alpha = std::max(alpha, d);
-            // if (!search)
-            // {
-            //     break;
-            // }
+            if (!search)
+            {
+                break;
+            }
             optimum.eval = d;
             optimum.movement = maxnode->move_eval_arr[0].movement;
             
@@ -178,10 +179,10 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
                 b->undo_last_move(maxnode->move_eval_arr[j].movement);
                 alpha = std::max(alpha, d);
                 
-                // if (!search)
-                // {
-                //     break;
-                // }
+                if (!search)
+                {
+                    break;
+                }
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
@@ -196,7 +197,6 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
             // best_move = optimum.movement;
             // std::cout << "SET AT : " << cutoff << std::endl;
             ++cutoff;
-            delete maxnode;
             // return optimum.movement;
         }
         
@@ -205,12 +205,12 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
     else
     {
         // std::cout << "Checking black search" << std::endl;
-        while (search)
+        while (search && cutoff < 6)
         {
             // std::cout << "Cutoff: " << cutoff << std::endl;
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
-            Node* minnode = new Node(b, evaluator);
+            std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
             // if (minnode->legal_moves.empty())
             // {
             //     return;
@@ -226,10 +226,10 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
             int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
             b->undo_last_move(minnode->move_eval_arr.end()[-1].movement);
             beta = std::min(beta, d);
-            // if (!search)
-            // {
-            //     break;
-            // }
+            if (!search)
+            {
+                break;
+            }
             optimum.eval = d;
             optimum.movement = minnode->move_eval_arr.end()[-1].movement;
             
@@ -248,10 +248,10 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
                 b->undo_last_move(minnode->move_eval_arr.end()[-j].movement);
                 beta = std::min(beta, d);
                 
-                // if (!search)
-                // {
-                //     break;
-                // }
+                if (!search)
+                {
+                    break;
+                }
                 if (optimum.eval > d)
                 {
                     optimum.eval = d;
@@ -271,26 +271,28 @@ void search_move(Board* b, std::atomic<bool>& search, std::atomic<U16>& best_mov
             // best_move = optimum.movement;
             // std::cout << "SET AT : " << cutoff << std::endl;
             // return optimum.movement;
-            delete minnode;
         }
         // return optimum.movement;
     }
     std::cout << "BLYATTT  " << cutoff << "  SUUUUKAAAA" << std::endl; 
     if (training)
     {
+        std::cout << "Updating" << std::endl;
         evaluator->update(board_to_dioble(b), optimum.eval);
         evaluator->dump_weights("data/weights.txt");
+        std::cout << "Updated" << std::endl;
     }
     return;
 }
 
-double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator)
+double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
+    std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator)
 {
-    // if (!search)
-    // {
-    //     return 0;
-    // }
-    Node* maxnode = new Node(b, evaluator);
+    if (!search)
+    {
+        return 0;
+    }
+    std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
     if (maxnode->legal_moves.empty())
     {
         return maxnode->score();
@@ -334,19 +336,18 @@ double MAX_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atom
         {
             maxmove = d;
         }
-        
     }
-    delete maxnode;
     return maxmove;  
 }
 
-double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atomic<bool>& search, NeuralNetwork* evaluator)
+double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
+    std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator)
 {
-    // if (!search)
-    // {
-    //     return 0;
-    // }
-    Node* minnode = new Node(b, evaluator);
+    if (!search)
+    {
+        return 0;
+    }
+    std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
     if (minnode->legal_moves.empty())
     {
         return minnode->score();
@@ -392,6 +393,5 @@ double MIN_VAL(Board* b, double alpha, double beta, int i, int cutoff, std::atom
         }
         
     }
-    delete minnode;
     return minmove;  
 }
