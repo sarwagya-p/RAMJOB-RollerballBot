@@ -117,7 +117,7 @@ std::shared_ptr<Board> create_random_board(int num_pieces){
     }
     std::cout << std::endl;
 
-    std::uniform_int_distribution<size_t> uniform(0, 49);
+    std::uniform_int_distribution<size_t> uniform(0, 48);
     std::vector<U8> random_pos;
     while (random_pos.size() < shuffled_pieces.size()){
         U8 random_square = uniform(rd);
@@ -132,7 +132,7 @@ std::shared_ptr<Board> create_random_board(int num_pieces){
             
 
             y = (random_square-14)%4;
-            if (y>1) y+=4;
+            if (y>1) y+=3;
         }
         else {
             x = (random_square-35)/7 + 5;
