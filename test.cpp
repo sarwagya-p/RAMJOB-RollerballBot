@@ -244,7 +244,25 @@ void train(int num_pieces){
     stop = true;
 }
 
+void train()
+{
+    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "./data/weights.txt"));
+    double eval;
+    
+    std::shared_ptr<Board> board = create_random_board(0);
+    std::cout << board_to_str(board->data.board_0) << std::endl;
+    eval = board_temp_eval(board);
+    std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << board_temp_eval(board) << std::endl;
+    a->update(board_to_dioble(board), eval);
+    a->dump_weights("data/weights.txt");
+    
+}
+
 int main(){
-    for (int i=0; i<3; i++)
-    train(2);
+    for (int i=0; i<100; i++)
+    {
+        std::cout << "TRAIN NUMBER :: " << i << std::endl; 
+        train();
+    }
+    
 }
