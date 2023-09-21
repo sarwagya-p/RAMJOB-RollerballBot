@@ -215,3 +215,23 @@ void WSum::print_weights(){
 
     std::cout << std::endl << std::endl;
 }
+
+std::vector<double> make_features(std::shared_ptr<Board> board){
+    std::vector<double> features;
+
+    // Pawn advantage
+    
+    // Rook Adv
+
+    // Bishop Adv
+
+    // Pawn promotion manhattan distance
+
+    // In check
+
+    // In threat, for each piece type
+
+    // Defendend, for each piece type
+
+    return features;
+}

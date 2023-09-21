@@ -1,8 +1,11 @@
 #pragma once
 
+#include<memory>
 #include <fstream>
 #include<vector>
 #include <iostream>
+
+#include "board.hpp"
 
 class EvaluationFunc {
 public:
@@ -56,3 +59,5 @@ private:
     std::vector<double> weights;
     double learning_rate = 0.05;
 };
+
+std::vector<double> make_features(std::shared_ptr<Board> b);
