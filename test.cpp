@@ -56,38 +56,41 @@ double board_temp_eval(std::shared_ptr<Board> b)
     int num_moves = 40;
     double margin_score = get_margin_score(b);
     bool white_win, black_win;
-    white_win = true;
-    black_win = true;
+    white_win = false;
+    black_win = false;
     std::unordered_set<U16> legals;
     if (b->data.player_to_play == WHITE)
     {
         legals = b->get_legal_moves();
         if (legals.empty())
         {
-            white_win = false;
+            black_win = true;
         }
         b->data.player_to_play = BLACK;
         legals = b->get_legal_moves();
-        if (legals.empty())
+        if (b->in_check() || legals.empty())
         {
-            black_win = false;
+            white_win = true;
         }
+        b->data.player_to_play = WHITE;
     }
     else
     {
         legals = b->get_legal_moves();
         if (legals.empty())
         {
-            black_win = false;
+            white_win = true;
         }
         b->data.player_to_play = WHITE;
         legals = b->get_legal_moves();
-        if (legals.empty())
+        if (b->in_check() || legals.empty())
         {
-            white_win = false;
+            black_win = true;
         }
+        b->data.player_to_play = BLACK;
     }
-    return margin_score + white_win * 100 + (black_win - white_win) * (5 * (num_moves/20) + std::min(10, num_moves)) + 40*(white_win ^ black_win);
+    std::cout << "V or D:: " << white_win - black_win << std::endl;
+    return margin_score + (white_win - black_win) * 100 + (black_win - white_win) * (5 * (num_moves/20) + std::min(10, num_moves)) + 40*(white_win == black_win);
 
 }
 
@@ -99,14 +102,14 @@ void rotate_board1(U8 *src, U8 *tgt, const U8 *transform) {
 }
 
 std::shared_ptr<Board> create_random_board(int num_pieces){
-    std::vector<int> shuffled_pieces= {6,7};
+    std::vector<int> shuffled_pieces= {0,1,3,4,5,6,7,9,10,11};
 
-    // for (size_t i=9; i>=num_pieces; i--){
-    //     std::uniform_int_distribution<size_t> uniform(0, i);
-    //     size_t j = uniform(rd);
+    for (int i=9; i>=num_pieces; i--){
+        std::uniform_int_distribution<size_t> uniform(0, i);
+        size_t j = uniform(rd);
 
-    //     shuffled_pieces.erase(shuffled_pieces.begin()+j);
-    // }
+        shuffled_pieces.erase(shuffled_pieces.begin()+j);
+    }
     shuffled_pieces.push_back(2);
     shuffled_pieces.push_back(8);
 
@@ -248,18 +251,19 @@ void train()
 {
     std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "./data/weights.txt"));
     double eval;
-    
-    std::shared_ptr<Board> board = create_random_board(0);
+    std::uniform_int_distribution<size_t> uniform(0, 10);
+    std::shared_ptr<Board> board = create_random_board(uniform(rd));
     std::cout << board_to_str(board->data.board_0) << std::endl;
     eval = board_temp_eval(board);
-    std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << board_temp_eval(board) << std::endl;
+    std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << a->evaluate(board_to_dioble(board)) << std::endl;
+    std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << eval << std::endl;
     a->update(board_to_dioble(board), eval);
     a->dump_weights("data/weights.txt");
     
 }
 
 int main(){
-    for (int i=0; i<100; i++)
+    for (int i=0; i<10000; i++)
     {
         std::cout << "TRAIN NUMBER :: " << i << std::endl; 
         train();
