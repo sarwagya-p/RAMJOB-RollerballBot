@@ -57,7 +57,7 @@ struct CompareMoveEval{
     }
 };
 
-Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<NeuralNetwork> evaluator) 
+Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<EvaluationFunc> evaluator) 
     :board_state(board_state), evaluator(evaluator)
     {
         num_moves = 0;
@@ -163,7 +163,7 @@ double Node::score()
 }
 
 double move_and_eval(std::shared_ptr<Board> b, U16 move, int i, int cutoff, double alpha, double beta,
-std::shared_ptr<NeuralNetwork> evaluator, bool to_find_min, std::atomic<bool>& search){
+std::shared_ptr<EvaluationFunc> evaluator, bool to_find_min, std::atomic<bool>& search){
     if (!search) return 0;
     b->do_move(move);
     U8 last_killed_piece_temp = b->data.last_killed_piece;
@@ -185,7 +185,7 @@ std::shared_ptr<NeuralNetwork> evaluator, bool to_find_min, std::atomic<bool>& s
 
 //ADVERSARIAL SEARCH
 void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
-    bool training, std::shared_ptr<NeuralNetwork> evaluator)
+    bool training, std::shared_ptr<EvaluationFunc> evaluator)
 {
     int cutoff = 1;
     move_eval optimum;
@@ -327,7 +327,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 }
 
 double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
-    std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator)
+    std::atomic<bool>& search, std::shared_ptr<EvaluationFunc> evaluator)
 {
     if (!search) return 0;
     std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
@@ -375,7 +375,7 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 }
 
 double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
-    std::atomic<bool>& search, std::shared_ptr<NeuralNetwork> evaluator)
+    std::atomic<bool>& search, std::shared_ptr<EvaluationFunc> evaluator)
 {
     if (!search) return 0;
 

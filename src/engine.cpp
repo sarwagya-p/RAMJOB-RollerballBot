@@ -7,7 +7,7 @@
 #include "board.hpp"
 #include "engine.hpp"
 
-static std::shared_ptr<NeuralNetwork> evaluator = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "data/weights.txt"));
+static std::shared_ptr<EvaluationFunc> evaluator = std::shared_ptr<EvaluationFunc>(new NeuralNetwork(25, {10, 10}, "data/weights.txt"));
 
 void Engine::find_best_move(const Board& b) {
 

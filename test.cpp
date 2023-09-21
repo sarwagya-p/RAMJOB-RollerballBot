@@ -99,14 +99,14 @@ void rotate_board1(U8 *src, U8 *tgt, const U8 *transform) {
 }
 
 std::shared_ptr<Board> create_random_board(int num_pieces){
-    std::vector<int> shuffled_pieces= {6,7};
+    std::vector<int> shuffled_pieces= {0, 1, 3, 4, 5, 6,7, 9, 10, 11};
 
-    // for (size_t i=9; i>=num_pieces; i--){
-    //     std::uniform_int_distribution<size_t> uniform(0, i);
-    //     size_t j = uniform(rd);
+    for (size_t i=9; i>=num_pieces; i--){
+        std::uniform_int_distribution<size_t> uniform(0, i);
+        size_t j = uniform(rd);
 
-    //     shuffled_pieces.erase(shuffled_pieces.begin()+j);
-    // }
+        shuffled_pieces.erase(shuffled_pieces.begin()+j);
+    }
     shuffled_pieces.push_back(2);
     shuffled_pieces.push_back(8);
 
