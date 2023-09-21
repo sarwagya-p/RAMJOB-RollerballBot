@@ -49,7 +49,47 @@ constexpr U8 id[64] = {
     56, 57, 58, 59, 60, 61, 62, 63
 };
 
-std::mt19937 rd;
+std::mt19937 rd(std::time(0));
+
+double board_temp_eval(std::shared_ptr<Board> b)
+{
+    int num_moves = 40;
+    double margin_score = get_margin_score(b);
+    bool white_win, black_win;
+    white_win = true;
+    black_win = true;
+    std::unordered_set<U16> legals;
+    if (b->data.player_to_play == WHITE)
+    {
+        legals = b->get_legal_moves();
+        if (legals.empty())
+        {
+            white_win = false;
+        }
+        b->data.player_to_play = BLACK;
+        legals = b->get_legal_moves();
+        if (legals.empty())
+        {
+            black_win = false;
+        }
+    }
+    else
+    {
+        legals = b->get_legal_moves();
+        if (legals.empty())
+        {
+            black_win = false;
+        }
+        b->data.player_to_play = WHITE;
+        legals = b->get_legal_moves();
+        if (legals.empty())
+        {
+            white_win = false;
+        }
+    }
+    return margin_score + white_win * 100 + (black_win - white_win) * (5 * (num_moves/20) + std::min(10, num_moves)) + 40*(white_win ^ black_win);
+
+}
 
 void rotate_board1(U8 *src, U8 *tgt, const U8 *transform) {
 
