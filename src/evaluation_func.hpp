@@ -12,7 +12,7 @@ public:
     virtual void load_weights(std::string filename) = 0;
     virtual void dump_weights(std::string filename) = 0;
 
-    virtual std::vector<double> prepare_features(std::shared_ptr<Board> b) = 0;
+    virtual std::vector<double> prepare_features(std::shared_ptr<Board> b);
     virtual double evaluate(std::vector<double> features) = 0;
     virtual void update(std::vector<double> features, double evaluated_output) = 0;
 
@@ -27,7 +27,7 @@ public:
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
 
-    std::vector<double> prepare_features(std::shared_ptr<Board> b);
+    // std::vector<double> prepare_features(std::shared_ptr<Board> b);
     double evaluate(std::vector<double> features);
     void update(std::vector<double> features, double evaluated_output);
 
@@ -51,7 +51,7 @@ public:
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
 
-    std::vector<double> prepare_features(std::shared_ptr<Board> b);
+    // std::vector<double> prepare_features(std::shared_ptr<Board> b);
     double evaluate(std::vector<double> features);
     void update(std::vector<double> features, double evaluated_output);
 

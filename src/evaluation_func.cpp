@@ -66,42 +66,41 @@ double get_margin_score(std::shared_ptr<Board> board_state)
     return margin_score;
 }
 
-std::vector<double> NeuralNetwork::prepare_features(std::shared_ptr<Board> b)
-{
-    std::vector<double> dio = std::vector<double>(25);
-    dio[0] = (double)getx(b->data.b_rook_ws);
-    dio[2] = (double)getx(b->data.b_rook_bs);
-    dio[4] = (double)getx(b->data.b_king);
-    dio[6] = (double)getx(b->data.b_bishop);
-    dio[8] = (double)getx(b->data.b_pawn_ws);
-    dio[10] = (double)getx(b->data.b_pawn_bs);
+// std::vector<double> NeuralNetwork::prepare_features(std::shared_ptr<Board> b)
+// {
+    // std::vector<double> dio = std::vector<double>(25);
+    // dio[0] = (double)getx(b->data.b_rook_ws);
+    // dio[2] = (double)getx(b->data.b_rook_bs);
+    // dio[4] = (double)getx(b->data.b_king);
+    // dio[6] = (double)getx(b->data.b_bishop);
+    // dio[8] = (double)getx(b->data.b_pawn_ws);
+    // dio[10] = (double)getx(b->data.b_pawn_bs);
 
-    dio[12] = (double)getx(b->data.w_rook_ws);
-    dio[14] = (double)getx(b->data.w_rook_bs);
-    dio[16] = (double)getx(b->data.w_king);
-    dio[18] = (double)getx(b->data.w_bishop);
-    dio[20] = (double)getx(b->data.w_pawn_ws);
-    dio[22] = (double)getx(b->data.w_pawn_bs);
+    // dio[12] = (double)getx(b->data.w_rook_ws);
+    // dio[14] = (double)getx(b->data.w_rook_bs);
+    // dio[16] = (double)getx(b->data.w_king);
+    // dio[18] = (double)getx(b->data.w_bishop);
+    // dio[20] = (double)getx(b->data.w_pawn_ws);
+    // dio[22] = (double)getx(b->data.w_pawn_bs);
 
-    dio[1] = (double)gety(b->data.b_rook_ws);
-    dio[3] = (double)gety(b->data.b_rook_bs);
-    dio[5] = (double)gety(b->data.b_king);
-    dio[7] = (double)gety(b->data.b_bishop);
-    dio[9] = (double)gety(b->data.b_pawn_ws);
-    dio[11] = (double)gety(b->data.b_pawn_bs);
+    // dio[1] = (double)gety(b->data.b_rook_ws);
+    // dio[3] = (double)gety(b->data.b_rook_bs);
+    // dio[5] = (double)gety(b->data.b_king);
+    // dio[7] = (double)gety(b->data.b_bishop);
+    // dio[9] = (double)gety(b->data.b_pawn_ws);
+    // dio[11] = (double)gety(b->data.b_pawn_bs);
 
-    dio[13] = (double)gety(b->data.w_rook_ws);
-    dio[15] = (double)gety(b->data.w_rook_bs);
-    dio[17] = (double)gety(b->data.w_king);
-    dio[19] = (double)gety(b->data.w_bishop);
-    dio[21] = (double)gety(b->data.w_pawn_ws);
-    dio[23] = (double)gety(b->data.w_pawn_bs);
+    // dio[13] = (double)gety(b->data.w_rook_ws);
+    // dio[15] = (double)gety(b->data.w_rook_bs);
+    // dio[17] = (double)gety(b->data.w_king);
+    // dio[19] = (double)gety(b->data.w_bishop);
+    // dio[21] = (double)gety(b->data.w_pawn_ws);
+    // dio[23] = (double)gety(b->data.w_pawn_bs);
 
+    // dio[24] = get_margin_score(b);
 
-    dio[24] = get_margin_score(b);
-
-    return dio;
-}
+    // return dio;
+// }
 
 std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector<double> features){
     std::vector<std::vector<double>> outputs(layer_sizes.size());
@@ -274,9 +273,16 @@ void WSum::print_weights(){
     std::cout << std::endl << std::endl;
 }
 
-int sign_alive(U8 piece){
-    if (piece == DEAD) return -1;
-    return 1;
+int sign_alive(std::shared_ptr<Board> board, U8 piece, PieceType p_type){
+    if (piece == DEAD) return 0;
+    
+    if (p_type == PAWN){
+        if (board->data.board_0[piece] & PAWN) return 1;
+        return 0;
+    }
+
+    if (board->data.board_0[piece] & p_type) return 1;
+    return 0;
 }
 
 int manhattan_to_promotion(U8 piece, int final_x, int final_y){
@@ -288,37 +294,58 @@ int manhattan_to_promotion(U8 piece, int final_x, int final_y){
     return 7 - (std::abs(final_x - x) + std::abs(final_y - y));
 }
 
-std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
+std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> board){
     std::vector<double> features;
 
+    int white_pieces = 1, black_pieces = 1;
     // Pawn advantage
-    double pawn_adv = 0;
 
-    pawn_adv -= sign_alive(board->data.b_pawn_bs);
-    pawn_adv -= sign_alive(board->data.b_pawn_ws);
-    pawn_adv += sign_alive(board->data.w_pawn_bs);
-    pawn_adv += sign_alive(board->data.w_pawn_ws);
+    int num_b_pawns = sign_alive(board, board->data.b_pawn_bs, PAWN) + sign_alive(board, board->data.b_pawn_ws, PAWN);
+    int num_w_pawns = sign_alive(board, board->data.w_pawn_bs, PAWN)+sign_alive(board, board->data.w_pawn_ws, PAWN);
+    white_pieces += num_w_pawns;
+    black_pieces += num_b_pawns;
 
-    features.push_back(pawn_adv/2);
+    features.push_back((num_w_pawns-num_b_pawns)/2);
 
     // Rook Adv
 
-    double rook_adv = 0;
+    int num_b_rooks = 0;
+    num_b_rooks += sign_alive(board, board->data.b_rook_bs, ROOK);
+    num_b_rooks += sign_alive(board, board->data.b_rook_ws, ROOK);
+    num_b_rooks += sign_alive(board, board->data.b_pawn_ws, ROOK);
+    num_b_rooks += sign_alive(board, board->data.b_pawn_bs, ROOK);
+    
+    int num_w_rooks = 0;
+    num_w_rooks += sign_alive(board, board->data.w_rook_bs, ROOK);
+    num_w_rooks += sign_alive(board, board->data.w_rook_ws, ROOK);
+    num_w_rooks += sign_alive(board, board->data.w_pawn_ws, ROOK);
+    num_w_rooks += sign_alive(board, board->data.w_pawn_bs, ROOK);
 
-    rook_adv -= sign_alive(board->data.b_rook_bs);
-    rook_adv -= sign_alive(board->data.b_rook_ws);
-    rook_adv += sign_alive(board->data.w_rook_bs);
-    rook_adv += sign_alive(board->data.w_rook_ws);
+    white_pieces += 5*num_w_rooks;
+    black_pieces += 5*num_b_rooks;
 
-    features.push_back(rook_adv/2);
+    features.push_back((num_w_pawns-num_b_rooks)/2);
 
     // Bishop Adv
-    double bishop_adv = 0;
+    int num_w_bishops = 0;
+    int num_b_bishops = 0;
 
-    bishop_adv -= sign_alive(board->data.b_bishop);
-    bishop_adv += sign_alive(board->data.w_bishop);
+    num_b_bishops += sign_alive(board, board->data.b_bishop, BISHOP);
+    num_b_bishops += sign_alive(board, board->data.b_pawn_bs, BISHOP);
+    num_b_bishops += sign_alive(board, board->data.b_pawn_ws, BISHOP);
 
-    features.push_back(bishop_adv);
+    num_w_bishops += sign_alive(board, board->data.w_bishop, BISHOP);
+    num_w_bishops += sign_alive(board, board->data.w_pawn_bs, BISHOP);
+    num_w_bishops += sign_alive(board, board->data.w_pawn_ws, BISHOP);
+
+    white_pieces += 3*num_w_bishops;
+    black_pieces += 3*num_b_bishops;
+    features.push_back(num_w_bishops-num_b_bishops);
+
+    // Ratio of alive pieces
+
+    features.push_back(white_pieces/black_pieces);
+    features.push_back(black_pieces/white_pieces);
 
     // Pawn promotion manhattan distance
 
@@ -341,36 +368,36 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
     features.push_back(check);
 
     // In threat, for each piece type
-    std::unordered_set<U16> white_moves, black_moves;
-    PlayerColor curr_player = board->data.player_to_play;
+    // std::unordered_set<U16> white_moves, black_moves;
+    // PlayerColor curr_player = board->data.player_to_play;
 
-    std::unordered_map<U8, int> being_attacked;
-    being_attacked[PAWN] = 0;
-    being_attacked[ROOK] = 0;
-    being_attacked[BISHOP] = 0;
+    // std::unordered_map<U8, int> being_attacked;
+    // being_attacked[PAWN] = 0;
+    // being_attacked[ROOK] = 0;
+    // being_attacked[BISHOP] = 0;
 
-    board->data.player_to_play = WHITE;
-    white_moves = board->get_legal_moves();
+    // board->data.player_to_play = WHITE;
+    // white_moves = board->get_legal_moves();
 
-    board->data.player_to_play = BLACK;
-    black_moves = board->get_legal_moves();
-    board->data.player_to_play = curr_player;
+    // board->data.player_to_play = BLACK;
+    // black_moves = board->get_legal_moves();
+    // board->data.player_to_play = curr_player;
 
-    for (U16 w_move: white_moves){
-        if (board->data.board_0[getp1(w_move)] & BLACK){
-            being_attacked[board->data.board_0[getp1(w_move)] & 0xf]++;
-        }
-    }
+    // for (U16 w_move: white_moves){
+    //     if (board->data.board_0[getp1(w_move)] & BLACK){
+    //         being_attacked[board->data.board_0[getp1(w_move)] & 0xf]++;
+    //     }
+    // }
     
-    for (U16 b_move: black_moves){
-        if (board->data.board_0[getp1(b_move)] & WHITE){
-            being_attacked[board->data.board_0[getp1(b_move)] & 0xf]++;
-        }
-    }
+    // for (U16 b_move: black_moves){
+    //     if (board->data.board_0[getp1(b_move)] & WHITE){
+    //         being_attacked[board->data.board_0[getp1(b_move)] & 0xf]++;
+    //     }
+    // }
 
-    features.push_back(being_attacked[PAWN]/4);
-    features.push_back(being_attacked[ROOK]/4);
-    features.push_back(being_attacked[BISHOP]/4);
+    // features.push_back(being_attacked[PAWN]/4);
+    // features.push_back(being_attacked[ROOK]/4);
+    // features.push_back(being_attacked[BISHOP]/4);
     // Defendend, for each piece type
 
     std::cout << "Features made" << std::endl;
