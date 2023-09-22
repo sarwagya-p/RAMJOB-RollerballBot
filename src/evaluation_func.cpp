@@ -246,7 +246,7 @@ double WSum::evaluate(std::vector<double> features){
         weightedSum += weights[i]*features[i];
     }
 
-    return sigmoid(0.169*weightedSum)*100;
+    return sigmoid(0.1694*weightedSum)*100;
 }
 
 void WSum::update(std::vector<double> features, double evaluated_output){
