@@ -245,8 +245,8 @@ double WSum::evaluate(std::vector<double> features){
     for (int i=0; i<weights.size(); i++){
         weightedSum += weights[i]*features[i];
     }
-
-    return sigmoid(0.1694*weightedSum)*100;
+    std::cout << "SUKAA SUM: " << weightedSum << std::endl;
+    return weightedSum*30;
 }
 
 void WSum::update(std::vector<double> features, double evaluated_output){
@@ -325,7 +325,7 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     white_pieces += 5*num_w_rooks;
     black_pieces += 5*num_b_rooks;
 
-    features.push_back((num_w_pawns-num_b_rooks)/2);
+    features.push_back((num_w_rooks-num_b_rooks)/2);
 
     // Bishop Adv
     int num_w_bishops = 0;
@@ -366,6 +366,7 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
         check += int(board->data.player_to_play == WHITE) - int(board->data.player_to_play == BLACK);
         if (board->get_legal_moves().empty())
         {
+            std::cout << "IS MATEEE" << std::endl;
             if(board->data.player_to_play == WHITE)
             {
                 check = -1000;

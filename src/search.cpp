@@ -310,7 +310,7 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     if (legal_moves.empty())
     {   
         // std::cout << "Check7 : " << std::endl;
-        return maxnode->score();
+        return evaluator->evaluate(evaluator->prepare_features(b));
         // std::cout << "Check8 : " << std::endl;
     }
     if (i == cutoff)
@@ -369,7 +369,7 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     if (legal_moves.empty())
     {
         // std::cout << "Check4 : " << std::endl;
-        return minnode->score();
+        return evaluator->evaluate(evaluator->prepare_features(b));
         // std::cout << "Check5 : " << std::endl;
     }
     if (i == cutoff)

@@ -8,7 +8,7 @@
 #include "engine.hpp"
 
 // static std::shared_ptr<EvaluationFunc> evaluator = std::shared_ptr<EvaluationFunc>(new NeuralNetwork(25, {10, 10}, "data/weights.txt"));
-static std::shared_ptr<EvaluationFunc> evaluator = std::make_shared<WSum>(8, "./data/wsum_weights.txt", false);
+static std::shared_ptr<EvaluationFunc> evaluator = std::make_shared<WSum>(7, "./data/wsum_weights.txt", false);
 
 
 void Engine::find_best_move(const Board& b) {

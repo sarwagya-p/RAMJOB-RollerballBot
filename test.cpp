@@ -336,10 +336,10 @@ void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator, std::shared_ptr<
     
 }
 void train_neural(int num_pieces){
-    std::shared_ptr<EvaluationFunc> b = std::make_shared<WSum>(5, "./data/wsum_weights.txt", false);
+    std::shared_ptr<EvaluationFunc> b = std::make_shared<WSum>(7, "./data/wsum_weights.txt", false);
     std::vector<int> hidden_layers = {5};
 
-    std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(5, hidden_layers, "./data/weights.txt", false);
+    std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(7, hidden_layers, "./data/weights.txt", false);
 
     train_on_margin(a, b);
 }
@@ -352,7 +352,7 @@ void train_wsum(int num_pieces){
 
 int main(){
     std::vector<int> hidden_layers = {5};
-    std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(5, hidden_layers, "./data/weights.txt", true);
+    std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(7, hidden_layers, "./data/weights.txt", true);
     long long i = 1;
     while (true)
     {
