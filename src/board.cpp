@@ -87,7 +87,7 @@ std::unordered_set<U16> construct_bottom_rook_moves_with_board(const U8 p0, cons
             }
         }
     }
-    else {
+    if (p0 >= 8) {
         if (!(board[p0-pos(0,1)] & color)) rook_moves.insert(move(p0, p0-pos(0,1))); // bottom
     }
 
@@ -132,7 +132,7 @@ std::unordered_set<U16> construct_bottom_bishop_moves_with_board(const U8 p0, co
     std::unordered_set<U16> bishop_moves;
 
     // top right - move back
-    if (p0 < 6 || p0 == 13) {
+    if (p0 < 6 || p0 >= 12) {
         if (!(board[p0+pos(0,1)+pos(1,0)] & color)) bishop_moves.insert(move(p0, p0+pos(0,1)+pos(1,0)));
     }
     // bottom right - move back
@@ -528,11 +528,6 @@ void Board::do_move(U16 move) {
     _do_move(move);
     _flip_player();
 }
-
-// void Board::undo_last_move(U16 move) {
-//     _undo_last_move(move);
-//     _flip_player();
-// }
 
 void Board::_flip_player() {
     this->data.player_to_play = (PlayerColor)(this->data.player_to_play ^ (WHITE | BLACK));

@@ -3,7 +3,7 @@
 #include "evaluation_func.hpp"
 
 double sigmoid(double x){
-        return 1/(1+std::exp(x));
+        return 1/(1+std::exp(-x));
 }
 
 double sigmoid_derivative(double x){
@@ -237,13 +237,16 @@ void WSum::dump_weights(std::string filename){
 }
 
 double WSum::evaluate(std::vector<double> features){
+    
+    std::cout << "Checkeval1 : " << std::endl;
     double weightedSum = 0;
 
     for (int i=0; i<weights.size(); i++){
         weightedSum += weights[i]*features[i];
     }
-
-    return sigmoid(weightedSum)*100;
+    double ans = sigmoid(weightedSum)*100;
+    std::cout << "Checkeval2 : " << std::endl;
+    return ans;
 }
 
 void WSum::update(std::vector<double> features, double evaluated_output){
