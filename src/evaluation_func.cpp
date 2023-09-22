@@ -11,7 +11,7 @@ double sigmoid_derivative(double x){
 
 NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights, bool to_train)
 :to_train(to_train){
-    learning_rate = 0.01;
+    learning_rate = 0.1;
     layer_sizes = hidden_layers_sizes;
     layer_sizes.insert(layer_sizes.begin(), input_size);
     layer_sizes.push_back(1);

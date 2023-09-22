@@ -254,8 +254,8 @@ void train(int num_pieces){
     std::shared_ptr<Board> board = create_random_board(2);
 
     std::cout << board_to_str(board->data.board_0) << std::endl;
-    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", true));
-    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false));
+    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "./data/weights_2.txt", true));
+    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "./data/weights_2.txt", false));
 
 
     std::atomic<bool> a_search(true), b_search(true), stop(false);
@@ -265,7 +265,7 @@ void train(int num_pieces){
     int i = 0;
     U16 w1, w2, w3, w4, w5, w6;
     U16 b1, b2, b3, b4, b5, b6;
-    while (board->get_legal_moves().size() > 0 && i < 100){
+    while (board->get_legal_moves().size() > 0){
         // std::cout << "Doing move" << std::endl;
         if (board->data.player_to_play == WHITE){
             search_move(board, a_search, best_move_a, true, a);
@@ -278,7 +278,6 @@ void train(int num_pieces){
             w3 = w2;
             w2 = w1;
             w1 = best_move_a;
-            
         }
         else{
             search_move(board, b_search, best_move_b, false, b);
@@ -298,17 +297,17 @@ void train(int num_pieces){
     std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << a->evaluate(board_to_dioble(board)) << std::endl;
     std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << eval << std::endl;
     a->update(board_to_dioble(board), eval);
-
-    std::cout << "Stopping"  << std::endl;
+    
+    std::cout << "Stopping" << std::endl;
     std::cout << "Dumping weights" << std::endl;
 
-    a->dump_weights("data/weights.txt");
+    a->dump_weights("data/weights_2.txt");
     stop = true;
 }
 
 void train()
 {
-    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "data/weights.txt", true));
+    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10, 10}, "data/weights_2.txt", true));
     double eval;
     std::uniform_int_distribution<size_t> uniform(0, 10);
     std::shared_ptr<Board> board = create_random_board(uniform(rd));
@@ -317,7 +316,7 @@ void train()
     std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << a->evaluate(board_to_dioble(board)) << std::endl;
     std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << eval << std::endl;
     a->update(board_to_dioble(board), eval);
-    a->dump_weights("data/weights.txt");
+    a->dump_weights("data/weights_2.txt");
     
 }
 
@@ -330,6 +329,9 @@ int main(){
         i++;
         train(3);
         // break;
+        // sleep(0.2);
+        // if (!(i%10000))
+        //     sleep(10);
     }
     
 }

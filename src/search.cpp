@@ -60,7 +60,7 @@ struct CompareMoveEval{
 Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<EvaluationFunc> evaluator) 
     :board_state(board_state), evaluator(evaluator)
     {
-        num_moves = 0;
+        num_moves = 30;
         legal_moves = board_state->get_legal_moves();
     }
 
@@ -317,7 +317,9 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
     }
     std::cout << "BLYATTT  " << cutoff << "  SUUUUKAAAA" << std::endl; 
     if (training)
-    {
+    {   
+        std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBLYAAADD SUUUKAA EVAL ___ SCORE::" << optimum.eval << std::endl;
+        std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << evaluator->evaluate(board_to_dioble(b)) << std::endl;
         std::cout << "Updating" << std::endl;
         evaluator->update(board_to_dioble(b), optimum.eval);
         evaluator->dump_weights("data/weights.txt");

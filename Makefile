@@ -38,7 +38,11 @@ package:
 	cd build && zip -r rollerball.zip rollerball
 
 test:
-	g++ test.cpp src/neural_network.cpp src/search.cpp src/board.cpp -o bin/test
+	g++ test.cpp src/evaluation_func.cpp src/search.cpp src/board.cpp -o bin/test
+	./bin/test
+
+test_2:
+	g++ test_2.cpp src/evaluation_func.cpp src/search.cpp src/board.cpp -o bin/test
 	./bin/test
 
 dbg_frontend: src/debug_frontend.cpp 
