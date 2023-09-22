@@ -49,50 +49,54 @@ constexpr U8 id[64] = {
 };
 
 struct CompareMoveEval{
-    bool reverse = false;
-
-    CompareMoveEval(bool reverse = false): reverse(reverse){}
     bool operator()(const move_eval mve1, const move_eval mve2)
     {
-        return (mve1.eval > mve2.eval) != reverse;
+        return (mve1.eval > mve2.eval);
     }
 };
+
+struct CompareMoveEvalReverse{
+    bool operator()(const move_eval mve1, const move_eval mve2)
+    {
+        return (mve1.eval > mve2.eval);
+    }
+};
+
 
 Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<EvaluationFunc> evaluator) 
     :board_state(board_state), evaluator(evaluator)
     {
         num_moves = 0;
-        legal_moves = board_state->get_legal_moves();
+        std::cout << "Node set." << std::endl;
     }
 
-void Node::Order_Children(std::atomic<bool>& search, bool reverse)
+std::vector<move_eval> Node::Order_Children(std::atomic<bool>& search, bool reverse)
 {
+    std::unordered_set<U16> legal_moves = board_state->get_legal_moves();
+    std::vector<move_eval> move_eval_arr;
+
     move_eval temp;
     for (U16 test_move: legal_moves)
     {
-        if (!search) return;
+        if (!search) return {};
         // std::cout << "Move: " << test_move << std::endl;
         temp.movement = test_move;
         board_state->do_move(test_move);
+        std::cout << "Evaluating move: " << (int)test_move << std::endl;
         temp.eval = evaluator->evaluate(evaluator->prepare_features(board_state));
         undo_last_move(board_state, test_move);
 
         move_eval_arr.push_back(temp);
     }
-    std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval(reverse));
-
-    // std::cout << "Move order: " << std::endl;
-    // for (move_eval test_move: move_eval_arr){
-    //     std::cout << test_move.movement << " ";
-    // }
-    // std::cout << std::endl;
-    // std::cout << "TIME TO GET ORDERRED NODE CHILDREN" << std::endl;
-    // for (move_eval t: move_eval_arr)
-    // {
-    //    std::cout << "CHILD MOVE : " << t.movement << " VAL : " << t.eval << std::endl;
-    // }
-    // std::cout << "ALL CHILDREN DONE" << std::endl;
-
+    std::cout << "Evalutions done, sorting" << std::endl;
+    
+    if (!reverse)
+    std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
+    else
+    std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEvalReverse());
+    std::cout << "Sorted" << std::endl;
+    
+    return move_eval_arr;
 }
 
 double Node::score()
@@ -153,15 +157,18 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
             std::shared_ptr<Node> maxnode = std::make_shared<Node>(b, evaluator);
-            if (maxnode->legal_moves.empty())
+            std::vector<move_eval> legal_moves = maxnode->Order_Children(search, false);
+            std::cout << "Legal moves made" << std::endl;
+            if (legal_moves.empty())
             {
+                std::cout << "No legals, returning" << std::endl;
                 return;
             }
-            maxnode->Order_Children(search, true);
+            
 
             std::cout << "LEGALS WHITE: " << std::endl;
-            for (U16 test_move: maxnode->legal_moves){
-                std::cout << test_move << " ";
+            for (move_eval test_move: legal_moves){
+                std::cout << test_move.movement << " ";
             }
             std::cout << std::endl;
             // std::cout << "LEGALS OREDERRED: " << std::endl;
@@ -186,10 +193,11 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // best_move = optimum.movement;
             // std::cout << "SET AT : " << cutoff << std::endl;
             
-            for(size_t j = 0; j < maxnode->move_eval_arr.size(); j++)
+
+            for(size_t j = 0; j < legal_moves.size(); j++)
             {
                 std::cout << "Evaling index: " << j << std::endl;
-                d = move_and_eval(b, maxnode->move_eval_arr[j].movement, 0, cutoff,
+                d = move_and_eval(b, legal_moves[j].movement, 0, cutoff,
                 alpha, beta, evaluator, true, search);
                 std::cout << "Done evaling index: " << j << std::endl;
                 if (!search) break;
@@ -198,7 +206,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
-                    optimum.movement = maxnode->move_eval_arr[j].movement;
+                    optimum.movement = legal_moves[j].movement;
                     std::cout << "SETTING : " << optimum.movement << std::endl;
                     best_move = optimum.movement;
                     std::cout << "SET AT : " << cutoff << std::endl;
@@ -224,18 +232,20 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
             std::shared_ptr<Node> minnode = std::make_shared<Node>(b, evaluator);
-            if (minnode->legal_moves.empty())
+            std::vector<move_eval> legal_moves = minnode->Order_Children(search, true);
+            if (legal_moves.empty())
             {
+                std::cout << "No legals, returning" << std::endl;
                 return;
             }
-            minnode->Order_Children(search, true);
+
             std::cout << "LEGALS BLACK: " << std::endl;
-            for (U16 test_move: minnode->legal_moves){
-                std::cout << test_move << " ";
+            for (move_eval test_move: legal_moves){
+                std::cout << test_move.movement << " ";
             }
             std::cout << std::endl;
             // double maxmove;
-            double d = move_and_eval(b, minnode->move_eval_arr[0].movement, 0, cutoff,
+            double d = move_and_eval(b, legal_moves[0].movement, 0, cutoff,
                 alpha, beta, evaluator, false, search);
             if (!search) break;
             beta = std::min(beta, d);
@@ -247,9 +257,9 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // std::cout << "SETTING : " << optimum.movement << std::endl;
             // best_move = optimum.movement;
             // std::cout << "SET AT : " << cutoff << std::endl;
-            for(size_t j = 0; j < minnode->move_eval_arr.size(); j++)
+            for(size_t j = 0; j < legal_moves.size(); j++)
             {
-                double d = move_and_eval(b, minnode->move_eval_arr[j].movement, 0, cutoff,
+                double d = move_and_eval(b, legal_moves[j].movement, 0, cutoff,
                 alpha, beta, evaluator, false, search);
                 if (!search) break;
                 beta = std::min(beta, d);
@@ -257,7 +267,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                 if (optimum.eval > d)
                 {
                     optimum.eval = d;
-                    optimum.movement = minnode->move_eval_arr[j].movement;
+                    optimum.movement = legal_moves[j].movement;
                     // if (!search)
                     // {
                     //     return;
@@ -295,7 +305,9 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     
     std::shared_ptr<Node> maxnode = std::make_shared<Node>(b, evaluator);
     std::cout << "Node memory alloted" << std::endl;
-    if (maxnode->legal_moves.empty())
+    std::vector<move_eval> legal_moves = maxnode->Order_Children(search, false);
+
+    if (legal_moves.empty())
     {   
         // std::cout << "Check7 : " << std::endl;
         return maxnode->score();
@@ -325,9 +337,9 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     // }    
     // maxmove = d;
     
-    for(size_t j = 0; j < maxnode->move_eval_arr.size(); j++)
+    for(size_t j = 0; j < legal_moves.size(); j++)
     {
-        d = move_and_eval(b, maxnode->move_eval_arr[j].movement, i+1, cutoff,
+        d = move_and_eval(b, legal_moves[j].movement, i+1, cutoff,
         alpha, beta, evaluator, true, search);
         if (!search) return 0;
 
@@ -352,7 +364,9 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 
     std::shared_ptr<Node> minnode = std::make_shared<Node>(b, evaluator);
     std::cout << "Node memory alloted" << std::endl;
-    if (minnode->legal_moves.empty())
+    std::vector<move_eval> legal_moves = minnode->Order_Children(search, true);
+
+    if (legal_moves.empty())
     {
         // std::cout << "Check4 : " << std::endl;
         return minnode->score();
@@ -385,9 +399,9 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     // }    
     // minmove = d;
     
-    for(size_t j = 0; j < minnode->move_eval_arr.size(); j++)
+    for(size_t j = 0; j < legal_moves.size(); j++)
     {
-        d = move_and_eval(b, minnode->move_eval_arr[j].movement, i+1, cutoff,
+        d = move_and_eval(b, legal_moves[j].movement, i+1, cutoff,
         alpha, beta, evaluator, false, search);
         if (!search) return 0;
 

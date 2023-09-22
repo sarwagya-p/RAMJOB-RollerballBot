@@ -319,15 +319,15 @@ void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator)
 }
 
 void train_neural(int num_pieces){
-    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false, true));
-    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false, false));
+    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", true));
+    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false));
 
     train(num_pieces, a, b);
 }
 
 void train_wsum(int num_pieces){
     // std::shared_ptr<EvaluationFunc> a = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
-    std::shared_ptr<EvaluationFunc> b = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
+    std::shared_ptr<EvaluationFunc> b = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false));
     train_on_margin(b);
 }
 

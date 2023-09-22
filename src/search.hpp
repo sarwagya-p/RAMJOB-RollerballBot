@@ -18,17 +18,17 @@ class Node {
 public:
     std::shared_ptr<Board> board_state;
     int num_moves;
-    std::unordered_set<U16> legal_moves;
+    // std::unordered_set<U16> legal_moves;
     std::shared_ptr<EvaluationFunc> evaluator;
     // Node* parent_node;
     // std::vector<Node*> children;
 
-    std::vector<move_eval> move_eval_arr; 
+    // std::vector<move_eval> move_eval_arr; 
 
     Node(std::shared_ptr<Board> board_state, std::shared_ptr<EvaluationFunc> evaluator);
     
     
-    void Order_Children(std::atomic<bool>& search, bool reverse = false);
+    std::vector<move_eval> Order_Children(std::atomic<bool>& search, bool reverse = false);
     double score();
 };
 double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 

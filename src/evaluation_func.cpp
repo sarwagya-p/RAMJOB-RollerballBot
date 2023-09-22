@@ -12,8 +12,7 @@ double sigmoid_derivative(double x){
 }
 
 NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename, 
-    bool randomize_weights, bool to_train)
-:to_train(to_train), filename(filename){
+    bool randomize_weights):filename(filename){
     learning_rate = 0.1;
     layer_sizes = hidden_layers_sizes;
     layer_sizes.insert(layer_sizes.begin(), input_size);
@@ -201,7 +200,7 @@ void NeuralNetwork::print_weights(){
     }
 }
 
-WSum::WSum(int input_size, std::string filename, bool randomize, bool train): filename(filename){
+WSum::WSum(int input_size, std::string filename, bool randomize): filename(filename){
     weights = std::vector<double>(input_size);
 
     if (!randomize){
@@ -239,7 +238,10 @@ void WSum::dump_weights(std::string filename){
 
 double WSum::evaluate(std::vector<double> features){
     double weightedSum = 0;
-
+    if (features.size() != weights.size()){
+        std::cout << "Feature size mismatch" << std::endl;
+        return 0;
+    }
     for (int i=0; i<weights.size(); i++){
         weightedSum += weights[i]*features[i];
     }
@@ -280,8 +282,8 @@ int sign_alive(U8 piece){
 int manhattan_to_promotion(U8 piece, int final_x, int final_y){
     if (piece == DEAD) return 0;
     
-    int x = getp0(piece);
-    int y = getp1(piece);
+    int x = getx(piece);
+    int y = gety(piece);
 
     return 7 - (std::abs(final_x - x) + std::abs(final_y - y));
 }
@@ -371,5 +373,6 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
     features.push_back(being_attacked[BISHOP]/4);
     // Defendend, for each piece type
 
+    std::cout << "Features made" << std::endl;
     return features;
 }

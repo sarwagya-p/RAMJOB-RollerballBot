@@ -520,7 +520,7 @@ std::unordered_set<U16> Board::get_legal_moves() const {
     }
 
     delete c;
-
+    std::cout << "Legals got." << std::endl;
     return legal_moves;
 }
 

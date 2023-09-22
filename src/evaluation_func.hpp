@@ -22,7 +22,7 @@ public:
 class NeuralNetwork : public EvaluationFunc {
 public:
     NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename,
-        bool randomize_weights=true, bool to_train = false);
+        bool randomize_weights=true);
     
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
@@ -34,7 +34,6 @@ public:
     void print_weights();
 
 private:
-    bool to_train;
     std::vector<int> layer_sizes;
     std::string filename;
     
@@ -47,7 +46,7 @@ private:
 
 class WSum : public EvaluationFunc {
 public:
-    WSum(int input_size, std::string filename, bool randomize = false, bool train = false);
+    WSum(int input_size, std::string filename, bool randomize = false);
 
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
