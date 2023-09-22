@@ -112,11 +112,13 @@ double Node::score()
 double move_and_eval(std::shared_ptr<Board> b, U16 move, int i, int cutoff, double alpha, double beta,
 std::shared_ptr<EvaluationFunc> evaluator, bool to_find_min, std::atomic<bool>& search){
     if (!search) return 0;
+    std::cout << "Doing move for eval." << std::endl;
     b->do_move(move);
     U8 last_killed_piece_temp = b->data.last_killed_piece;
     int last_killed_piece_idx_temp = b->data.last_killed_piece_idx;
-
+    std::cout << "Done move." << std::endl;
     double d = 0;
+    std::cout << "Making Node: " << std::endl;
     if (to_find_min){
         // std::cout << "Check0.25" << std::endl;
         d = MIN_VAL(b, alpha, beta, i, cutoff, search, evaluator);
@@ -127,6 +129,7 @@ std::shared_ptr<EvaluationFunc> evaluator, bool to_find_min, std::atomic<bool>& 
         d = MAX_VAL(b, alpha, beta, i, cutoff, search, evaluator);
         // std::cout << "Check0.5" << std::endl;
     }
+    std::cout << "Search done" << std::endl;
     b->data.last_killed_piece = last_killed_piece_temp;
     b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
     undo_last_move(b, move);
@@ -149,7 +152,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // std::cout << "Cutoff: " << cutoff << std::endl;
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
-            std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
+            std::shared_ptr<Node> maxnode = std::make_shared<Node>(b, evaluator);
             if (maxnode->legal_moves.empty())
             {
                 return;
@@ -167,10 +170,14 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // }
             // std::cout << std::endl;
             // double maxmove;
-            double d = move_and_eval(b, maxnode->move_eval_arr[0].movement, 0, cutoff, 
-            alpha, beta, evaluator, true, search);
-            if (!search) break;
-            alpha = std::max(alpha, d);
+
+            double d;
+            // std::cout << "Evaling index: 0" << std::endl;
+            // double d = move_and_eval(b, maxnode->move_eval_arr[0].movement, 0, cutoff, 
+            // alpha, beta, evaluator, true, search);
+            // std::cout << "Evaling index: 0" << std::endl;
+            // if (!search) break;
+            // alpha = std::max(alpha, d);
             
             optimum.eval = -DBL_MAX;
             // optimum.movement = maxnode->move_eval_arr[0].movement;
@@ -181,8 +188,10 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             
             for(size_t j = 0; j < maxnode->move_eval_arr.size(); j++)
             {
+                std::cout << "Evaling index: " << j << std::endl;
                 d = move_and_eval(b, maxnode->move_eval_arr[j].movement, 0, cutoff,
                 alpha, beta, evaluator, true, search);
+                std::cout << "Done evaling index: " << j << std::endl;
                 if (!search) break;
                 alpha = std::max(alpha, d);
                 
@@ -214,7 +223,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // std::cout << "Cutoff: " << cutoff << std::endl;
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
-            std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
+            std::shared_ptr<Node> minnode = std::make_shared<Node>(b, evaluator);
             if (minnode->legal_moves.empty())
             {
                 return;
@@ -281,10 +290,11 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
     std::atomic<bool>& search, std::shared_ptr<EvaluationFunc> evaluator)
 {
-    
+    std::cout << "Called max val for cutoff = " << cutoff << " depth = " << i << std::endl;
     if (!search) return 0;
-    std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
     
+    std::shared_ptr<Node> maxnode = std::make_shared<Node>(b, evaluator);
+    std::cout << "Node memory alloted" << std::endl;
     if (maxnode->legal_moves.empty())
     {   
         // std::cout << "Check7 : " << std::endl;
@@ -296,7 +306,9 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
         return evaluator->evaluate(evaluator->prepare_features(b));
     }
     // std::cout << "Check77 : " << std::endl;
+    std::cout << "Ordering" << std::endl;
     maxnode->Order_Children(search);
+    std::cout << "Ordered" << std::endl;
     // std::cout << "Check88 : " << std::endl;
     if (!search) return 0;
     
@@ -335,11 +347,11 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
     std::atomic<bool>& search, std::shared_ptr<EvaluationFunc> evaluator)
 {
-    
+    std::cout << "Called min val for cutoff = " << cutoff << " depth = " << i << std::endl;
     if (!search) return 0;
 
-    std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
-    
+    std::shared_ptr<Node> minnode = std::make_shared<Node>(b, evaluator);
+    std::cout << "Node memory alloted" << std::endl;
     if (minnode->legal_moves.empty())
     {
         // std::cout << "Check4 : " << std::endl;
@@ -351,7 +363,9 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
         return evaluator->evaluate(evaluator->prepare_features(b));
     }
     // std::cout << "Check44 : " << std::endl;
+    std::cout << "Ordering" << std::endl;
     minnode->Order_Children(search, true);
+    std::cout << "Ordered" << std::endl;
     // std::cout << "Check55 : " << std::endl;
     if (!search) return 0;
 

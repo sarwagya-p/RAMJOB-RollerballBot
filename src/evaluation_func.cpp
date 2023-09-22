@@ -327,7 +327,7 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
                             - manhattan_to_promotion(board->data.b_pawn_ws, 2, 1);
 
     features.push_back(promotion_adv/14);
-
+    std::cout << "Man dist: " << promotion_adv << std::endl;
     // In check
 
     double check = 0;
