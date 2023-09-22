@@ -1,6 +1,6 @@
 #include <unordered_map>
-#include "evaluation_func.hpp"
 #include<random>
+#include "evaluation_func.hpp"
 
 double sigmoid(double x){
         return 1/(1+std::exp(x));
@@ -10,8 +10,9 @@ double sigmoid_derivative(double x){
     return sigmoid(x)*(1-sigmoid(x));
 }
 
-NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights, bool to_train)
-:to_train(to_train){
+NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename, 
+    bool randomize_weights, bool to_train)
+:to_train(to_train), filename(filename){
     learning_rate = 0.1;
     layer_sizes = hidden_layers_sizes;
     layer_sizes.insert(layer_sizes.begin(), input_size);
@@ -26,6 +27,7 @@ NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_size
     }
 
     if (!randomize_weights){
+        load_weights(filename);
         return;
     }
     
@@ -47,10 +49,58 @@ NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_size
     }
 }
 
-NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename, bool to_train)
-:to_train(to_train){
-    NeuralNetwork(input_size, hidden_layers_sizes, false);
-    load_weights(filename);
+double get_margin_score(std::shared_ptr<Board> board_state)
+{
+    double margin_score = 0;
+    margin_score -= (board_state->data.b_rook_ws != DEAD)*3;
+    margin_score -= (board_state->data.b_rook_bs != DEAD)*3;
+    margin_score -= (board_state->data.b_bishop != DEAD)*5;
+    margin_score -= (board_state->data.b_pawn_ws != DEAD);
+    margin_score -= (board_state->data.b_pawn_bs != DEAD);
+
+    margin_score += (board_state->data.w_rook_ws != DEAD)*3;
+    margin_score += (board_state->data.w_rook_bs != DEAD)*3;
+    margin_score += (board_state->data.w_bishop != DEAD)*5;
+    margin_score += (board_state->data.w_pawn_ws != DEAD);
+    margin_score += (board_state->data.w_pawn_bs != DEAD);
+    return margin_score;
+}
+
+std::vector<double> NeuralNetwork::prepare_features(std::shared_ptr<Board> b)
+{
+    std::vector<double> dio = std::vector<double>(25);
+    dio[0] = (double)getx(b->data.b_rook_ws);
+    dio[2] = (double)getx(b->data.b_rook_bs);
+    dio[4] = (double)getx(b->data.b_king);
+    dio[6] = (double)getx(b->data.b_bishop);
+    dio[8] = (double)getx(b->data.b_pawn_ws);
+    dio[10] = (double)getx(b->data.b_pawn_bs);
+
+    dio[12] = (double)getx(b->data.w_rook_ws);
+    dio[14] = (double)getx(b->data.w_rook_bs);
+    dio[16] = (double)getx(b->data.w_king);
+    dio[18] = (double)getx(b->data.w_bishop);
+    dio[20] = (double)getx(b->data.w_pawn_ws);
+    dio[22] = (double)getx(b->data.w_pawn_bs);
+
+    dio[1] = (double)gety(b->data.b_rook_ws);
+    dio[3] = (double)gety(b->data.b_rook_bs);
+    dio[5] = (double)gety(b->data.b_king);
+    dio[7] = (double)gety(b->data.b_bishop);
+    dio[9] = (double)gety(b->data.b_pawn_ws);
+    dio[11] = (double)gety(b->data.b_pawn_bs);
+
+    dio[13] = (double)gety(b->data.w_rook_ws);
+    dio[15] = (double)gety(b->data.w_rook_bs);
+    dio[17] = (double)gety(b->data.w_king);
+    dio[19] = (double)gety(b->data.w_bishop);
+    dio[21] = (double)gety(b->data.w_pawn_ws);
+    dio[23] = (double)gety(b->data.w_pawn_bs);
+
+
+    dio[24] = get_margin_score(b);
+
+    return dio;
 }
 
 std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector<double> features){
@@ -106,6 +156,8 @@ void NeuralNetwork::update(std::vector<double> features, double evaluated_output
             }
         }
     }
+
+    dump_weights(filename);
 }
 
 void NeuralNetwork::load_weights(std::string filename){
@@ -148,8 +200,13 @@ void NeuralNetwork::print_weights(){
     }
 }
 
-WSum::WSum(int input_size, bool train){
+WSum::WSum(int input_size, std::string filename, bool randomize, bool train): filename(filename){
     weights = std::vector<double>(input_size);
+
+    if (!randomize){
+        load_weights(filename);
+        return;
+    }
 
     std::random_device rd;
     std::mt19937 generator(rd());
@@ -157,11 +214,6 @@ WSum::WSum(int input_size, bool train){
     for (int i=0; i<input_size; i++){
         weights[i] = uniform(generator);
     }
-}
-
-WSum::WSum(int input_size, std::string filename){
-    weights = std::vector<double>(input_size);
-    load_weights(filename);
 }
 
 void WSum::load_weights(std::string filename){
@@ -207,6 +259,8 @@ void WSum::update(std::vector<double> features, double evaluated_output){
     for (int i=0; i<weights.size(); i++){
         weights[i] += learning_rate*(evaluated_output - prior_output) * weighted_features[i]/weighted_sum;
     }
+
+    dump_weights(filename);
 }
 
 void WSum::print_weights(){
@@ -231,7 +285,7 @@ int manhattan_to_promotion(U8 piece, int final_x, int final_y){
     return std::abs(final_x - x) + std::abs(final_y - y);
 }
 
-std::vector<double> make_features(std::shared_ptr<Board> board){
+std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
     std::vector<double> features;
 
     // Pawn advantage
@@ -266,10 +320,10 @@ std::vector<double> make_features(std::shared_ptr<Board> board){
     // Pawn promotion manhattan distance
 
     double promotion_adv = manhattan_to_promotion(board->data.w_pawn_bs, 4, 6) 
-                            - manhattan_to_promotion(board->data.w_pawn_bs, 2, 1);
+                            - manhattan_to_promotion(board->data.b_pawn_bs, 2, 1);
 
     promotion_adv += manhattan_to_promotion(board->data.w_pawn_ws, 4, 6) 
-                            - manhattan_to_promotion(board->data.w_pawn_ws, 2, 1);
+                            - manhattan_to_promotion(board->data.b_pawn_ws, 2, 1);
 
     features.push_back(promotion_adv);
 

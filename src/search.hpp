@@ -40,6 +40,5 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
     bool training, std::shared_ptr<EvaluationFunc> evaluator);
 
-std::vector<double> board_to_dioble(std::shared_ptr<Board> b);
 double get_margin_score(std::shared_ptr<Board> board_state);
 void undo_last_move(std::shared_ptr<Board> b, U16 move);

@@ -1,7 +1,8 @@
 #include <algorithm>
 #include <iostream>
-#include "search.hpp"
 #include <float.h>
+#include "search.hpp"
+
 
 constexpr U8 cw_90[64] = {
     48, 40, 32, 24, 16, 8,  0,  7,
@@ -60,7 +61,7 @@ struct CompareMoveEval{
 Node::Node(std::shared_ptr<Board> board_state, std::shared_ptr<EvaluationFunc> evaluator) 
     :board_state(board_state), evaluator(evaluator)
     {
-        num_moves = 30;
+        num_moves = 0;
         legal_moves = board_state->get_legal_moves();
     }
 
@@ -73,7 +74,7 @@ void Node::Order_Children(std::atomic<bool>& search, bool reverse)
         // std::cout << "Move: " << test_move << std::endl;
         temp.movement = test_move;
         board_state->do_move(test_move);
-        temp.eval = evaluator->evaluate(board_to_dioble(board_state));
+        temp.eval = evaluator->evaluate(evaluator->prepare_features(board_state));
         undo_last_move(board_state, test_move);
 
         move_eval_arr.push_back(temp);
@@ -92,60 +93,6 @@ void Node::Order_Children(std::atomic<bool>& search, bool reverse)
     // }
     // std::cout << "ALL CHILDREN DONE" << std::endl;
 
-}
-
-std::vector<double> board_to_dioble(std::shared_ptr<Board> b)
-{
-    std::vector<double> dio = std::vector<double>(25);
-    dio[0] = (double)getx(b->data.b_rook_ws);
-    dio[2] = (double)getx(b->data.b_rook_bs);
-    dio[4] = (double)getx(b->data.b_king);
-    dio[6] = (double)getx(b->data.b_bishop);
-    dio[8] = (double)getx(b->data.b_pawn_ws);
-    dio[10] = (double)getx(b->data.b_pawn_bs);
-
-    dio[12] = (double)getx(b->data.w_rook_ws);
-    dio[14] = (double)getx(b->data.w_rook_bs);
-    dio[16] = (double)getx(b->data.w_king);
-    dio[18] = (double)getx(b->data.w_bishop);
-    dio[20] = (double)getx(b->data.w_pawn_ws);
-    dio[22] = (double)getx(b->data.w_pawn_bs);
-
-    dio[1] = (double)gety(b->data.b_rook_ws);
-    dio[3] = (double)gety(b->data.b_rook_bs);
-    dio[5] = (double)gety(b->data.b_king);
-    dio[7] = (double)gety(b->data.b_bishop);
-    dio[9] = (double)gety(b->data.b_pawn_ws);
-    dio[11] = (double)gety(b->data.b_pawn_bs);
-
-    dio[13] = (double)gety(b->data.w_rook_ws);
-    dio[15] = (double)gety(b->data.w_rook_bs);
-    dio[17] = (double)gety(b->data.w_king);
-    dio[19] = (double)gety(b->data.w_bishop);
-    dio[21] = (double)gety(b->data.w_pawn_ws);
-    dio[23] = (double)gety(b->data.w_pawn_bs);
-
-
-    dio[24] = get_margin_score(b);
-
-    return dio;
-}
-
-double get_margin_score(std::shared_ptr<Board> board_state)
-{
-    double margin_score = 0;
-    margin_score -= (board_state->data.b_rook_ws != DEAD)*3;
-    margin_score -= (board_state->data.b_rook_bs != DEAD)*3;
-    margin_score -= (board_state->data.b_bishop != DEAD)*5;
-    margin_score -= (board_state->data.b_pawn_ws != DEAD);
-    margin_score -= (board_state->data.b_pawn_bs != DEAD);
-
-    margin_score += (board_state->data.w_rook_ws != DEAD)*3;
-    margin_score += (board_state->data.w_rook_bs != DEAD)*3;
-    margin_score += (board_state->data.w_bishop != DEAD)*5;
-    margin_score += (board_state->data.w_pawn_ws != DEAD);
-    margin_score += (board_state->data.w_pawn_bs != DEAD);
-    return margin_score;
 }
 
 double Node::score()
@@ -317,12 +264,9 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
     }
     std::cout << "BLYATTT  " << cutoff << "  SUUUUKAAAA" << std::endl; 
     if (training)
-    {   
-        std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBLYAAADD SUUUKAA EVAL ___ SCORE::" << optimum.eval << std::endl;
-        std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << evaluator->evaluate(board_to_dioble(b)) << std::endl;
+    {
         std::cout << "Updating" << std::endl;
-        evaluator->update(board_to_dioble(b), optimum.eval);
-        evaluator->dump_weights("data/weights.txt");
+        evaluator->update(evaluator->prepare_features(b), optimum.eval);
         std::cout << "Updated" << std::endl;
     }
     return;
@@ -339,7 +283,7 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     }
     if (i == cutoff)
     {
-        return evaluator->evaluate(board_to_dioble(b));
+        return evaluator->evaluate(evaluator->prepare_features(b));
     }
     maxnode->Order_Children(search);
     if (!search) return 0;
@@ -388,7 +332,7 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     }
     if (i == cutoff)
     {
-        return evaluator->evaluate(board_to_dioble(b));
+        return evaluator->evaluate(evaluator->prepare_features(b));
     }
     minnode->Order_Children(search, true);
     if (!search) return 0;

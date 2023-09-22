@@ -12,6 +12,7 @@ public:
     virtual void load_weights(std::string filename) = 0;
     virtual void dump_weights(std::string filename) = 0;
 
+    virtual std::vector<double> prepare_features(std::shared_ptr<Board> b) = 0;
     virtual double evaluate(std::vector<double> features) = 0;
     virtual void update(std::vector<double> features, double evaluated_output) = 0;
 
@@ -20,12 +21,13 @@ public:
 
 class NeuralNetwork : public EvaluationFunc {
 public:
-    NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, bool randomize_weights=true, bool to_train = false);
-    NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename, bool to_train = false);
-
+    NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename,
+        bool randomize_weights=true, bool to_train = false);
+    
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
 
+    std::vector<double> prepare_features(std::shared_ptr<Board> b);
     double evaluate(std::vector<double> features);
     void update(std::vector<double> features, double evaluated_output);
 
@@ -34,6 +36,7 @@ public:
 private:
     bool to_train;
     std::vector<int> layer_sizes;
+    std::string filename;
     
     double learning_rate;
     std::vector<std::vector<std::vector<double>>> weights;
@@ -44,12 +47,12 @@ private:
 
 class WSum : public EvaluationFunc {
 public:
-    WSum(int input_size, bool train);
-    WSum(int input_size, std::string filename);
+    WSum(int input_size, std::string filename, bool randomize = false, bool train = false);
 
     void load_weights(std::string filename);
     void dump_weights(std::string filename);
 
+    std::vector<double> prepare_features(std::shared_ptr<Board> b);
     double evaluate(std::vector<double> features);
     void update(std::vector<double> features, double evaluated_output);
 
@@ -58,6 +61,7 @@ public:
 private:
     std::vector<double> weights;
     double learning_rate = 0.05;
+    std::string filename;
 };
 
-std::vector<double> make_features(std::shared_ptr<Board> b);
+double get_margin_score(std::shared_ptr<Board> board_state);

@@ -250,13 +250,10 @@ void player(std::shared_ptr<Board> board, std::atomic<bool>& search, std::atomic
     }
 }
 
-void train(int num_pieces){
-    std::shared_ptr<Board> board = create_random_board(2);
+void train(int num_pieces, std::shared_ptr<EvaluationFunc> a, std::shared_ptr<EvaluationFunc> b){
+    std::shared_ptr<Board> board = create_random_board(num_pieces);
 
     std::cout << board_to_str(board->data.board_0) << std::endl;
-    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", true));
-    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false));
-
 
     std::atomic<bool> a_search(true), b_search(true), stop(false);
     std::atomic<U16> best_move_a, best_move_b;
@@ -295,9 +292,9 @@ void train(int num_pieces){
         i++;
     }
     double eval = board_temp_eval(board);
-    std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << a->evaluate(board_to_dioble(board)) << std::endl;
+    std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << a->evaluate(a->prepare_features(board)) << std::endl;
     std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << eval << std::endl;
-    a->update(board_to_dioble(board), eval);
+    a->update(a->prepare_features(board), eval);
 
     std::cout << "Stopping"  << std::endl;
     std::cout << "Dumping weights" << std::endl;
@@ -306,29 +303,42 @@ void train(int num_pieces){
     stop = true;
 }
 
-void train()
+void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator)
 {
-    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "data/weights.txt", true));
+    // std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "data/weights.txt", true));
     double eval;
     std::uniform_int_distribution<size_t> uniform(0, 10);
     std::shared_ptr<Board> board = create_random_board(uniform(rd));
     std::cout << board_to_str(board->data.board_0) << std::endl;
     eval = board_temp_eval(board);
-    std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << a->evaluate(board_to_dioble(board)) << std::endl;
+    std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << evaluator->evaluate(evaluator->prepare_features(board)) << std::endl;
     std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << eval << std::endl;
-    a->update(board_to_dioble(board), eval);
-    a->dump_weights("data/weights.txt");
+    evaluator->update(evaluator->prepare_features(board), eval);
+    evaluator->dump_weights("data/weights.txt");
     
+}
+
+void train_neural(int num_pieces){
+    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false, true));
+    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false, false));
+
+    train(num_pieces, a, b);
+}
+
+void train_wsum(int num_pieces){
+    std::shared_ptr<EvaluationFunc> a = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
+    std::shared_ptr<EvaluationFunc> b = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
+    train(num_pieces, a, b);
 }
 
 int main(){
     long long i = 1;
-    while (i < 100)
+    while (i < 2)
     {
         std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTRAIN NUMBER :: " << i << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"<< std::endl; 
         // sleep(2);
         i++;
-        train(3);
+        train_wsum(2);
         // break;
     }
     

@@ -13,9 +13,9 @@ PYTHON_VERSION=$(shell python -c "import sys; print('python' + '.'.join(sys.vers
 
 rollerball:
 	mkdir -p bin
-	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/board.cpp src/engine.cpp src/neural_network.cpp src/search.cpp src/rollerball.cpp src/uciws.cpp -lpthread -o bin/rollerball_b
+	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/board.cpp src/engine.cpp src/evaluation_func.cpp src/search.cpp src/rollerball.cpp src/uciws.cpp -lpthread -o bin/rollerball_b
 	sed "s/false/true/" src/engine.cpp	
-	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/board.cpp src/engine.cpp src/neural_network.cpp src/search.cpp src/rollerball.cpp src/uciws.cpp -lpthread -o bin/rollerball_w
+	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/board.cpp src/engine.cpp src/evaluation_func.cpp src/search.cpp src/rollerball.cpp src/uciws.cpp -lpthread -o bin/rollerball_w
 	sed "s/true/false/" src/engine.cpp
 
 rollerball_py:
