@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include "evaluation_func.hpp"
 #include<random>
 
@@ -216,21 +217,103 @@ void WSum::print_weights(){
     std::cout << std::endl << std::endl;
 }
 
+int sign_alive(U8 piece){
+    if (piece == DEAD) return -1;
+    return 1;
+}
+
+int manhattan_to_promotion(U8 piece, int final_x, int final_y){
+    if (piece == DEAD) return 7;
+    
+    int x = getp0(piece);
+    int y = getp1(piece);
+
+    return std::abs(final_x - x) + std::abs(final_y - y);
+}
+
 std::vector<double> make_features(std::shared_ptr<Board> board){
     std::vector<double> features;
 
     // Pawn advantage
-    
+    double pawn_adv = 0;
+
+    pawn_adv -= sign_alive(board->data.b_pawn_bs);
+    pawn_adv -= sign_alive(board->data.b_pawn_ws);
+    pawn_adv += sign_alive(board->data.w_pawn_bs);
+    pawn_adv += sign_alive(board->data.w_pawn_ws);
+
+    features.push_back(pawn_adv);
+
     // Rook Adv
 
+    double rook_adv = 0;
+
+    rook_adv -= sign_alive(board->data.b_rook_bs);
+    rook_adv -= sign_alive(board->data.b_rook_ws);
+    rook_adv += sign_alive(board->data.w_rook_bs);
+    rook_adv += sign_alive(board->data.w_rook_ws);
+
+    features.push_back(rook_adv);
+
     // Bishop Adv
+    double bishop_adv = 0;
+
+    bishop_adv -= sign_alive(board->data.b_bishop);
+    bishop_adv += sign_alive(board->data.w_bishop);
+
+    features.push_back(bishop_adv);
 
     // Pawn promotion manhattan distance
 
+    double promotion_adv = manhattan_to_promotion(board->data.w_pawn_bs, 4, 6) 
+                            - manhattan_to_promotion(board->data.w_pawn_bs, 2, 1);
+
+    promotion_adv += manhattan_to_promotion(board->data.w_pawn_ws, 4, 6) 
+                            - manhattan_to_promotion(board->data.w_pawn_ws, 2, 1);
+
+    features.push_back(promotion_adv);
+
     // In check
 
-    // In threat, for each piece type
+    double check = 0;
 
+    if (board->in_check()){
+        check += int(board->data.player_to_play == WHITE) - int(board->data.player_to_play == BLACK);
+    }
+
+    features.push_back(check);
+
+    // In threat, for each piece type
+    std::unordered_set<U16> white_moves, black_moves;
+    PlayerColor curr_player = board->data.player_to_play;
+
+    std::unordered_map<U8, int> being_attacked;
+    being_attacked[PAWN] = 0;
+    being_attacked[ROOK] = 0;
+    being_attacked[BISHOP] = 0;
+
+    board->data.player_to_play = WHITE;
+    white_moves = board->get_legal_moves();
+
+    board->data.player_to_play = BLACK;
+    black_moves = board->get_legal_moves();
+    board->data.player_to_play = curr_player;
+
+    for (U16 w_move: white_moves){
+        if (board->data.board_0[getp1(w_move)] & BLACK){
+            being_attacked[board->data.board_0[getp1(w_move)] & 0xf]++;
+        }
+    }
+    
+    for (U16 b_move: black_moves){
+        if (board->data.board_0[getp1(b_move)] & WHITE){
+            being_attacked[board->data.board_0[getp1(b_move)] & 0xf]++;
+        }
+    }
+
+    features.push_back(being_attacked[PAWN]);
+    features.push_back(being_attacked[ROOK]);
+    features.push_back(being_attacked[BISHOP]);
     // Defendend, for each piece type
 
     return features;
