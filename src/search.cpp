@@ -118,10 +118,14 @@ std::shared_ptr<EvaluationFunc> evaluator, bool to_find_min, std::atomic<bool>& 
 
     double d = 0;
     if (to_find_min){
+        // std::cout << "Check0.25" << std::endl;
         d = MIN_VAL(b, alpha, beta, i, cutoff, search, evaluator);
+        // std::cout << "Check0.5" << std::endl;
     }
     else {
+        // std::cout << "Check0.25" << std::endl;
         d = MAX_VAL(b, alpha, beta, i, cutoff, search, evaluator);
+        // std::cout << "Check0.5" << std::endl;
     }
     b->data.last_killed_piece = last_killed_piece_temp;
     b->data.last_killed_piece_idx = last_killed_piece_idx_temp;
@@ -146,10 +150,10 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
             std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
-            // if (maxnode->legal_moves.empty())
-            // {
-            //     return;
-            // }
+            if (maxnode->legal_moves.empty())
+            {
+                return;
+            }
             maxnode->Order_Children(search, true);
 
             std::cout << "LEGALS WHITE: " << std::endl;
@@ -165,7 +169,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // double maxmove;
             double d = move_and_eval(b, maxnode->move_eval_arr[0].movement, 0, cutoff, 
             alpha, beta, evaluator, true, search);
-            if (!search) return;
+            if (!search) break;
             alpha = std::max(alpha, d);
             
             optimum.eval = -DBL_MAX;
@@ -179,19 +183,20 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             {
                 d = move_and_eval(b, maxnode->move_eval_arr[j].movement, 0, cutoff,
                 alpha, beta, evaluator, true, search);
-                if (!search) return;
+                if (!search) break;
                 alpha = std::max(alpha, d);
                 
                 if (optimum.eval < d)
                 {
                     optimum.eval = d;
                     optimum.movement = maxnode->move_eval_arr[j].movement;
-                    // std::cout << "SETTING : " << optimum.movement << std::endl;
+                    std::cout << "SETTING : " << optimum.movement << std::endl;
                     best_move = optimum.movement;
-                    // std::cout << "SET AT : " << cutoff << std::endl;
+                    std::cout << "SET AT : " << cutoff << std::endl;
                 }
                 
             }
+            if (!search) break;
             std::cout << "SETTING : " << optimum.movement << std::endl;
             best_move = optimum.movement;
             std::cout << "SET AT : " << cutoff << std::endl;
@@ -210,10 +215,10 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             double alpha = -DBL_MAX;
             double beta = DBL_MAX;
             std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
-            // if (minnode->legal_moves.empty())
-            // {
-            //     return;
-            // }
+            if (minnode->legal_moves.empty())
+            {
+                return;
+            }
             minnode->Order_Children(search, true);
             std::cout << "LEGALS BLACK: " << std::endl;
             for (U16 test_move: minnode->legal_moves){
@@ -223,9 +228,9 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // double maxmove;
             double d = move_and_eval(b, minnode->move_eval_arr[0].movement, 0, cutoff,
                 alpha, beta, evaluator, false, search);
-            if (!search) return;
+            if (!search) break;
             beta = std::min(beta, d);
-
+            // std::cout << "Check1" << std::endl;
             optimum.eval = DBL_MAX;
             // optimum.movement = minnode->move_eval_arr.end()[-1].movement;
             
@@ -237,7 +242,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             {
                 double d = move_and_eval(b, minnode->move_eval_arr[j].movement, 0, cutoff,
                 alpha, beta, evaluator, false, search);
-                if (!search) return;
+                if (!search) break;
                 beta = std::min(beta, d);
 
                 if (optimum.eval > d)
@@ -248,12 +253,13 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                     // {
                     //     return;
                     // }
-                    // std::cout << "SETTING : " << optimum.movement << std::endl;
+                    std::cout << "SETTING : " << optimum.movement << std::endl;
                     best_move = optimum.movement;
-                    // std::cout << "SET AT : " << cutoff << std::endl;
+                    std::cout << "SET AT : " << cutoff << std::endl;
                 }
                 
             }
+            if (!search) break;
             ++cutoff;
             std::cout << "SETTING : " << optimum.movement << std::endl;
             best_move = optimum.movement;
@@ -275,17 +281,23 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
     std::atomic<bool>& search, std::shared_ptr<EvaluationFunc> evaluator)
 {
+    
     if (!search) return 0;
     std::shared_ptr<Node> maxnode = std::shared_ptr<Node>(new Node(b, evaluator));
+    
     if (maxnode->legal_moves.empty())
-    {
+    {   
+        // std::cout << "Check7 : " << std::endl;
         return maxnode->score();
+        // std::cout << "Check8 : " << std::endl;
     }
     if (i == cutoff)
     {
         return evaluator->evaluate(evaluator->prepare_features(b));
     }
+    // std::cout << "Check77 : " << std::endl;
     maxnode->Order_Children(search);
+    // std::cout << "Check88 : " << std::endl;
     if (!search) return 0;
     
     double maxmove = -DBL_MAX;
@@ -323,18 +335,24 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int cutoff, 
     std::atomic<bool>& search, std::shared_ptr<EvaluationFunc> evaluator)
 {
+    
     if (!search) return 0;
 
     std::shared_ptr<Node> minnode = std::shared_ptr<Node>(new Node(b, evaluator));
+    
     if (minnode->legal_moves.empty())
     {
+        // std::cout << "Check4 : " << std::endl;
         return minnode->score();
+        // std::cout << "Check5 : " << std::endl;
     }
     if (i == cutoff)
-    {
+    {   
         return evaluator->evaluate(evaluator->prepare_features(b));
     }
+    // std::cout << "Check44 : " << std::endl;
     minnode->Order_Children(search, true);
+    // std::cout << "Check55 : " << std::endl;
     if (!search) return 0;
 
     double minmove = DBL_MAX;

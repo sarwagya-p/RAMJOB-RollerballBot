@@ -4,6 +4,7 @@
 
 double sigmoid(double x){
         return 1/(1+std::exp(-x));
+        return 1/(1+std::exp(-x));
 }
 
 double sigmoid_derivative(double x){
@@ -237,15 +238,12 @@ void WSum::dump_weights(std::string filename){
 }
 
 double WSum::evaluate(std::vector<double> features){
-    // std::cout << "Features: " << std::endl;
-
     double weightedSum = 0;
 
     for (int i=0; i<weights.size(); i++){
         weightedSum += weights[i]*features[i];
     }
 
-    // std::cout << "Weighted sum: " << weightedSum << " eval " << sigmoid(weightedSum)*100 << std::endl;
     return sigmoid(weightedSum)*100;
 }
 
