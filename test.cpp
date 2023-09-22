@@ -311,10 +311,10 @@ void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator)
     std::shared_ptr<Board> board = create_random_board(uniform(rd));
     std::cout << board_to_str(board->data.board_0) << std::endl;
     eval = board_temp_eval(board);
-    std::cout << "BLYAAADD SUUUKAA EVAL ___ SCORE::" << evaluator->evaluate(evaluator->prepare_features(board)) << std::endl;
-    std::cout << "BLYAAADD SUUUKAA TEMP ___ SCORE::" << eval << std::endl;
-    evaluator->update(evaluator->prepare_features(board), eval);
-    evaluator->dump_weights("data/weights.txt");
+    std::cout << "BLYAAADD SUUUKAA EVAL FUNC ___ SCORE::" << evaluator->evaluate(evaluator->prepare_features(board)) << std::endl;
+    std::cout << "BLYAAADD SUUUKAA BOARD MARGIN ___ SCORE::" << eval << std::endl;
+    // evaluator->update(evaluator->prepare_features(board), eval);
+    // evaluator->dump_weights("data/weights.txt");
     
 }
 
@@ -326,9 +326,9 @@ void train_neural(int num_pieces){
 }
 
 void train_wsum(int num_pieces){
-    std::shared_ptr<EvaluationFunc> a = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
+    // std::shared_ptr<EvaluationFunc> a = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
     std::shared_ptr<EvaluationFunc> b = std::shared_ptr<EvaluationFunc>(new WSum(8, "./data/wsum_weights.txt", false, false));
-    train(num_pieces, a, b);
+    train_on_margin(b);
 }
 
 int main(){

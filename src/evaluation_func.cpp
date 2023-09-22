@@ -3,7 +3,7 @@
 #include "evaluation_func.hpp"
 
 double sigmoid(double x){
-        return 1/(1+std::exp(x));
+        return 1/(1+std::exp(-x));
 }
 
 double sigmoid_derivative(double x){
@@ -237,12 +237,15 @@ void WSum::dump_weights(std::string filename){
 }
 
 double WSum::evaluate(std::vector<double> features){
+    // std::cout << "Features: " << std::endl;
+
     double weightedSum = 0;
 
     for (int i=0; i<weights.size(); i++){
         weightedSum += weights[i]*features[i];
     }
 
+    // std::cout << "Weighted sum: " << weightedSum << " eval " << sigmoid(weightedSum)*100 << std::endl;
     return sigmoid(weightedSum)*100;
 }
 
@@ -277,12 +280,12 @@ int sign_alive(U8 piece){
 }
 
 int manhattan_to_promotion(U8 piece, int final_x, int final_y){
-    if (piece == DEAD) return 7;
+    if (piece == DEAD) return 0;
     
     int x = getp0(piece);
     int y = getp1(piece);
 
-    return std::abs(final_x - x) + std::abs(final_y - y);
+    return 7 - (std::abs(final_x - x) + std::abs(final_y - y));
 }
 
 std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
@@ -296,7 +299,7 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
     pawn_adv += sign_alive(board->data.w_pawn_bs);
     pawn_adv += sign_alive(board->data.w_pawn_ws);
 
-    features.push_back(pawn_adv);
+    features.push_back(pawn_adv/2);
 
     // Rook Adv
 
@@ -307,7 +310,7 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
     rook_adv += sign_alive(board->data.w_rook_bs);
     rook_adv += sign_alive(board->data.w_rook_ws);
 
-    features.push_back(rook_adv);
+    features.push_back(rook_adv/2);
 
     // Bishop Adv
     double bishop_adv = 0;
@@ -325,7 +328,7 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
     promotion_adv += manhattan_to_promotion(board->data.w_pawn_ws, 4, 6) 
                             - manhattan_to_promotion(board->data.b_pawn_ws, 2, 1);
 
-    features.push_back(promotion_adv);
+    features.push_back(promotion_adv/14);
 
     // In check
 
@@ -365,9 +368,9 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
         }
     }
 
-    features.push_back(being_attacked[PAWN]);
-    features.push_back(being_attacked[ROOK]);
-    features.push_back(being_attacked[BISHOP]);
+    features.push_back(being_attacked[PAWN]/4);
+    features.push_back(being_attacked[ROOK]/4);
+    features.push_back(being_attacked[BISHOP]/4);
     // Defendend, for each piece type
 
     return features;
