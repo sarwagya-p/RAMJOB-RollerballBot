@@ -4,7 +4,6 @@
 
 double sigmoid(double x){
         return 1/(1+std::exp(-x));
-        return 1/(1+std::exp(-x));
 }
 
 double sigmoid_derivative(double x){
@@ -169,6 +168,7 @@ void NeuralNetwork::load_weights(std::string filename){
             }
         }
     } 
+    input_file.close();
 }
 
 void NeuralNetwork::dump_weights(std::string filename){
@@ -183,6 +183,7 @@ void NeuralNetwork::dump_weights(std::string filename){
         }
         output_file << std::endl;
     } 
+    output_file.close();
 }
 
 void NeuralNetwork::print_weights(){
@@ -363,6 +364,17 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
 
     if (board->in_check()){
         check += int(board->data.player_to_play == WHITE) - int(board->data.player_to_play == BLACK);
+        if (board->get_legal_moves().empty())
+        {
+            if(board->data.player_to_play == WHITE)
+            {
+                check = -1000;
+            }
+            else
+            {
+                check = 1000;
+            }
+        }
     }
 
     features.push_back(check);
