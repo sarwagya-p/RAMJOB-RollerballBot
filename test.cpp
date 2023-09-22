@@ -1,8 +1,10 @@
 #include <random>
 #include <thread>
 #include <algorithm>
+#include <memory>
 #include<unistd.h>
 #include "src/search.hpp"
+#include "src/evaluation_func.hpp"
 #include "src/board.hpp"
 
 constexpr U8 cw_90[64] = {
@@ -318,11 +320,28 @@ void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator)
     
 }
 
+void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator, std::shared_ptr<EvaluationFunc> wsum)
+{
+    // std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "data/weights.txt", true));
+    double bmarg, eval;
+    std::uniform_int_distribution<size_t> uniform(0, 10);
+    std::shared_ptr<Board> board = create_random_board(uniform(rd));
+    std::cout << board_to_str(board->data.board_0) << std::endl;
+    bmarg = wsum->evaluate(wsum->prepare_features(board));
+    eval = evaluator->evaluate(wsum->prepare_features(board));
+    std::cout << "BLYAAADD SUUUKAA EVAL FUNC ___ SCORE::" << eval << std::endl;
+    std::cout << "BLYAAADD SUUUKAA BOARD MARGIN ___ SCORE::" << bmarg << std::endl;
+    evaluator->update(evaluator->prepare_features(board), bmarg);
+    // evaluator->dump_weights("data/weights.txt");
+    
+}
 void train_neural(int num_pieces){
-    std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", true));
-    std::shared_ptr<NeuralNetwork> b = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "./data/weights.txt", false));
+    std::shared_ptr<EvaluationFunc> b = std::make_shared<WSum>(5, "./data/wsum_weights.txt", false);
+    std::vector<int> hidden_layers = {5};
 
-    train(num_pieces, a, b);
+    std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(5, hidden_layers, "./data/weights.txt", false);
+
+    train_on_margin(a, b);
 }
 
 void train_wsum(int num_pieces){
@@ -332,13 +351,19 @@ void train_wsum(int num_pieces){
 }
 
 int main(){
+    std::vector<int> hidden_layers = {5};
+    std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(5, hidden_layers, "./data/weights.txt", true);
     long long i = 1;
-    while (i < 2)
+    while (true)
     {
         std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTRAIN NUMBER :: " << i << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"<< std::endl; 
-        // sleep(2);
+        train_neural(3);
+        sleep(0.1);
+        if (!i%10000)
+        {
+            sleep(10);
+        }
         i++;
-        train_wsum(2);
         // break;
     }
     

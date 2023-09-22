@@ -4,7 +4,6 @@
 
 double sigmoid(double x){
         return 1/(1+std::exp(-x));
-        return 1/(1+std::exp(-x));
 }
 
 double sigmoid_derivative(double x){
@@ -170,6 +169,7 @@ void NeuralNetwork::load_weights(std::string filename){
             }
         }
     } 
+    input_file.close();
 }
 
 void NeuralNetwork::dump_weights(std::string filename){
@@ -184,6 +184,7 @@ void NeuralNetwork::dump_weights(std::string filename){
         }
         output_file << std::endl;
     } 
+    output_file.close();
 }
 
 void NeuralNetwork::print_weights(){
@@ -336,41 +337,52 @@ std::vector<double> WSum::prepare_features(std::shared_ptr<Board> board){
 
     if (board->in_check()){
         check += int(board->data.player_to_play == WHITE) - int(board->data.player_to_play == BLACK);
+        if (board->get_legal_moves().empty())
+        {
+            if(board->data.player_to_play == WHITE)
+            {
+                check = -1000;
+            }
+            else
+            {
+                check = 1000;
+            }
+        }
     }
 
     features.push_back(check);
 
-    // In threat, for each piece type
-    std::unordered_set<U16> white_moves, black_moves;
-    PlayerColor curr_player = board->data.player_to_play;
+    // // In threat, for each piece type
+    // std::unordered_set<U16> white_moves, black_moves;
+    // PlayerColor curr_player = board->data.player_to_play;
 
-    std::unordered_map<U8, int> being_attacked;
-    being_attacked[PAWN] = 0;
-    being_attacked[ROOK] = 0;
-    being_attacked[BISHOP] = 0;
+    // std::unordered_map<U8, int> being_attacked;
+    // being_attacked[PAWN] = 0;
+    // being_attacked[ROOK] = 0;
+    // being_attacked[BISHOP] = 0;
 
-    board->data.player_to_play = WHITE;
-    white_moves = board->get_legal_moves();
+    // board->data.player_to_play = WHITE;
+    // white_moves = board->get_legal_moves();
 
-    board->data.player_to_play = BLACK;
-    black_moves = board->get_legal_moves();
-    board->data.player_to_play = curr_player;
+    // board->data.player_to_play = BLACK;
+    // black_moves = board->get_legal_moves();
+    // board->data.player_to_play = curr_player;
 
-    for (U16 w_move: white_moves){
-        if (board->data.board_0[getp1(w_move)] & BLACK){
-            being_attacked[board->data.board_0[getp1(w_move)] & 0xf]++;
-        }
-    }
+    // for (U16 w_move: white_moves){
+    //     if (board->data.board_0[getp1(w_move)] & BLACK){
+    //         being_attacked[board->data.board_0[getp1(w_move)] & 0xf]++;
+    //     }
+    // }
     
-    for (U16 b_move: black_moves){
-        if (board->data.board_0[getp1(b_move)] & WHITE){
-            being_attacked[board->data.board_0[getp1(b_move)] & 0xf]++;
-        }
-    }
+    // for (U16 b_move: black_moves){
+    //     if (board->data.board_0[getp1(b_move)] & WHITE){
+    //         being_attacked[board->data.board_0[getp1(b_move)] & 0xf]++;
+    //     }
+    // }
 
-    features.push_back(being_attacked[PAWN]/4);
-    features.push_back(being_attacked[ROOK]/4);
-    features.push_back(being_attacked[BISHOP]/4);
+    // features.push_back(being_attacked[PAWN]/4);
+    // features.push_back(being_attacked[ROOK]/4);
+    // features.push_back(being_attacked[BISHOP]/4);
     // Defendend, for each piece type
 
     std::cout << "Features made" << std::endl;
