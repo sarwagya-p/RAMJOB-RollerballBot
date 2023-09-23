@@ -82,7 +82,7 @@ std::vector<move_eval> Node::Order_Children(std::atomic<bool>& search, bool reve
         // std::cout << "Move: " << test_move << std::endl;
         temp.movement = test_move;
         board_state->do_move(test_move);
-        std::cout << "Evaluating move: " << (int)test_move << std::endl;
+        std::cout << "Evaluating move: " << move_to_str(test_move) << std::endl;
         temp.eval = evaluator->evaluate(evaluator->prepare_features(board_state));
         undo_last_move(board_state, test_move);
 
@@ -168,7 +168,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 
             std::cout << "LEGALS WHITE: " << std::endl;
             for (move_eval test_move: legal_moves){
-                std::cout << test_move.movement << " ";
+                std::cout << move_to_str(test_move.movement) << " ";
             }
             std::cout << std::endl;
             // std::cout << "LEGALS OREDERRED: " << std::endl;
@@ -196,7 +196,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
 
             for(size_t j = 0; j < legal_moves.size(); j++)
             {
-                std::cout << "Evaling index: " << j << std::endl;
+                std::cout << "Evaling index: " << j << " move: " << move_to_str(legal_moves[j].movement) << std::endl;
                 d = move_and_eval(b, legal_moves[j].movement, 0, cutoff,
                 alpha, beta, evaluator, true, search);
                 std::cout << "Done evaling index: " << j << std::endl;
@@ -259,6 +259,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             // std::cout << "SET AT : " << cutoff << std::endl;
             for(size_t j = 0; j < legal_moves.size(); j++)
             {
+                std::cout << "Evaling index: " << j << " move: " << move_to_str(legal_moves[j].movement) << std::endl;
                 double d = move_and_eval(b, legal_moves[j].movement, 0, cutoff,
                 alpha, beta, evaluator, false, search);
                 if (!search) break;
@@ -279,7 +280,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
                 
             }
             if (!search) break;
-            ++cutoff;
+            cutoff += 2;
             std::cout << "SETTING : " << optimum.movement << std::endl;
             best_move = optimum.movement;
             std::cout << "SET AT : " << cutoff << std::endl;
