@@ -58,7 +58,7 @@ struct CompareMoveEval{
 struct CompareMoveEvalReverse{
     bool operator()(const move_eval mve1, const move_eval mve2)
     {
-        return (mve1.eval > mve2.eval);
+        return (mve1.eval < mve2.eval);
     }
 };
 
@@ -82,13 +82,13 @@ std::vector<move_eval> Node::Order_Children(std::atomic<bool>& search, bool reve
         // std::cout << "Move: " << test_move << std::endl;
         temp.movement = test_move;
         board_state->do_move(test_move);
-        std::cout << "Evaluating move: " << move_to_str(test_move) << std::endl;
+        // std::cout << "Evaluating move: " << move_to_str(test_move) << std::endl;
         temp.eval = evaluator->evaluate(evaluator->prepare_features(board_state));
         undo_last_move(board_state, test_move);
 
         move_eval_arr.push_back(temp);
     }
-    std::cout << "Evalutions done, sorting" << std::endl;
+    // std::cout << "Evalutions done, sorting" << std::endl;
     
     if (!reverse)
     std::sort(move_eval_arr.begin(), move_eval_arr.end(), CompareMoveEval());
@@ -145,13 +145,13 @@ std::shared_ptr<EvaluationFunc> evaluator, bool to_find_min, std::atomic<bool>& 
 void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
     bool training, std::shared_ptr<EvaluationFunc> evaluator)
 {
-    int cutoff = 1;
+    int cutoff = 0;
     move_eval optimum;
 
     if (b->data.player_to_play == WHITE)
     {
         // std::cout << "Checking white search" << std::endl;
-        while (search && cutoff < 6)
+        while (search)
         {
             // std::cout << "Cutoff: " << cutoff << std::endl;
             double alpha = -DBL_MAX;
@@ -226,7 +226,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
     else
     {
         // std::cout << "Checking black search" << std::endl;
-        while (search && cutoff < 6)
+        while (search)
         {
             // std::cout << "Cutoff: " << cutoff << std::endl;
             double alpha = -DBL_MAX;

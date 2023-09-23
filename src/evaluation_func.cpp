@@ -277,17 +277,12 @@ void WSum::print_weights(){
 int sign_alive(std::shared_ptr<Board> board, U8 piece, PieceType p_type){
     if (piece == DEAD) return 0;
     
-    if (p_type == PAWN){
-        if (board->data.board_0[piece] & PAWN) return 1;
-        return 0;
-    }
-
     if (board->data.board_0[piece] & p_type) return 1;
     return 0;
 }
 
-int manhattan_to_promotion(U8 piece, PlayerColor col){
-    if (piece == DEAD) return 0;
+int manhattan_to_promotion(std::shared_ptr<Board> b, U8 piece, PlayerColor col){
+    if (piece == DEAD || b->data.board_0[piece] != PAWN) return 0;
     
     int x = getx(piece);
     int y = gety(piece);
@@ -296,13 +291,13 @@ int manhattan_to_promotion(U8 piece, PlayerColor col){
         int d1 = std::abs(x - 2) + std::abs(y - 0);
         int d2 = std::abs(x - 2) + std::abs(y - 1);
 
-        return std::min(d1, d2);
+        return 7-std::min(d1, d2);
     }
 
     int d1 = std::abs(x-4)+std::abs(y-5);
     int d2 = std::abs(x-4)+std::abs(y-6);
 
-    return std::min(d1, d2);
+    return 7-std::min(d1, d2);
 }
 
 std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> board){
@@ -311,28 +306,28 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     double white_pieces = 1, black_pieces = 1;
     // Pawn advantage
 
-    int num_b_pawns = sign_alive(board, board->data.b_pawn_bs, PAWN) + sign_alive(board, board->data.b_pawn_ws, PAWN);
-    int num_w_pawns = sign_alive(board, board->data.w_pawn_bs, PAWN)+sign_alive(board, board->data.w_pawn_ws, PAWN);
+    double num_b_pawns = sign_alive(board, board->data.b_pawn_bs, PAWN) + sign_alive(board, board->data.b_pawn_ws, PAWN);
+    double num_w_pawns = sign_alive(board, board->data.w_pawn_bs, PAWN)+sign_alive(board, board->data.w_pawn_ws, PAWN);
     white_pieces += num_w_pawns;
     black_pieces += num_b_pawns;
 
     features.push_back((num_w_pawns-num_b_pawns)/2);
-    std::cout << "Pawns: " << num_w_pawns << " " << num_b_pawns << std::endl;
+    // std::cout << "Pawns: " << num_w_pawns << " " << num_b_pawns << std::endl;
     // Rook Adv
 
-    int num_b_rooks = 0;
+    double num_b_rooks = 0;
     num_b_rooks += sign_alive(board, board->data.b_rook_bs, ROOK);
     num_b_rooks += sign_alive(board, board->data.b_rook_ws, ROOK);
     num_b_rooks += sign_alive(board, board->data.b_pawn_ws, ROOK);
     num_b_rooks += sign_alive(board, board->data.b_pawn_bs, ROOK);
     
-    int num_w_rooks = 0;
+    double num_w_rooks = 0;
     num_w_rooks += sign_alive(board, board->data.w_rook_bs, ROOK);
     num_w_rooks += sign_alive(board, board->data.w_rook_ws, ROOK);
     num_w_rooks += sign_alive(board, board->data.w_pawn_ws, ROOK);
     num_w_rooks += sign_alive(board, board->data.w_pawn_bs, ROOK);
 
-    std::cout << "Rooks: " << num_w_rooks << " " << num_b_rooks << std::endl;
+    // std::cout << "Rooks: " << num_w_rooks << " " << num_b_rooks << std::endl;
 
     white_pieces += 5*num_w_rooks;
     black_pieces += 5*num_b_rooks;
@@ -340,8 +335,8 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     features.push_back((num_w_rooks-num_b_rooks)/2);
 
     // Bishop Adv
-    int num_w_bishops = 0;
-    int num_b_bishops = 0;
+    double num_w_bishops = 0;
+    double num_b_bishops = 0;
 
     num_b_bishops += sign_alive(board, board->data.b_bishop, BISHOP);
     num_b_bishops += sign_alive(board, board->data.b_pawn_bs, BISHOP);
@@ -351,7 +346,7 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     num_w_bishops += sign_alive(board, board->data.w_pawn_bs, BISHOP);
     num_w_bishops += sign_alive(board, board->data.w_pawn_ws, BISHOP);
 
-    std::cout << "Bishops: " << num_w_bishops << " " << num_b_bishops << std::endl;
+    // std::cout << "Bishops: " << num_w_bishops << " " << num_b_bishops << std::endl;
     white_pieces += 3*num_w_bishops;
     black_pieces += 3*num_b_bishops;
     features.push_back(num_w_bishops-num_b_bishops);
@@ -361,17 +356,17 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     features.push_back(white_pieces/black_pieces);
     features.push_back(black_pieces/white_pieces);
 
-    std::cout << "Ratio: " << white_pieces/black_pieces << " " << black_pieces/white_pieces << std::endl;
+    // std::cout << "Ratio: " << white_pieces/black_pieces << " " << black_pieces/white_pieces << std::endl;
     // Pawn promotion manhattan distance
 
-    double promotion_adv = manhattan_to_promotion(board->data.w_pawn_bs, WHITE) 
-                            + manhattan_to_promotion(board->data.w_pawn_ws, WHITE);
+    double promotion_adv = manhattan_to_promotion(board, board->data.w_pawn_bs, WHITE) 
+                            + manhattan_to_promotion(board, board->data.w_pawn_ws, WHITE);
 
-    promotion_adv -= manhattan_to_promotion(board->data.b_pawn_bs, BLACK) 
-                            + manhattan_to_promotion(board->data.b_pawn_ws, BLACK);
+    promotion_adv -= manhattan_to_promotion(board, board->data.b_pawn_bs, BLACK) 
+                            + manhattan_to_promotion(board, board->data.b_pawn_ws, BLACK);
 
     features.push_back(promotion_adv/14);
-    std::cout << "Man dist: " << promotion_adv << std::endl;
+    // std::cout << "Man dist: " << promotion_adv << std::endl;
     // In check
 
     double check = 0;
@@ -427,6 +422,6 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     // features.push_back(being_attacked[BISHOP]/4);
     // Defendend, for each piece type
 
-    std::cout << "Features made" << std::endl;
+    // std::cout << "Features made" << std::endl;
     return features;
 }
