@@ -252,6 +252,7 @@ double WSum::evaluate(std::vector<double> features){
         weightedSum += weights[i]*features[i];
     }
     std::cout << "SUKAA SUM: " << weightedSum << std::endl;
+    std::cout << "Man val: " << weights[5]*features[5];
     return weightedSum;
 }
 
@@ -288,7 +289,7 @@ int sign_alive(std::shared_ptr<Board> board, U8 piece, PieceType p_type){
 }
 
 int manhattan_to_promotion(std::shared_ptr<Board> b, U8 piece, PlayerColor col){
-    if (piece == DEAD || b->data.board_0[piece] != PAWN) return 0;
+    if (piece == DEAD || !(b->data.board_0[piece] & PAWN)) return 0;
     
     int x = getx(piece);
     int y = gety(piece);

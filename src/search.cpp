@@ -145,7 +145,7 @@ std::shared_ptr<EvaluationFunc> evaluator, bool to_find_min, std::atomic<bool>& 
 void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomic<U16>& best_move, 
     bool training, std::shared_ptr<EvaluationFunc> evaluator)
 {
-    int cutoff = 0;
+    int cutoff = 1;
     move_eval optimum;
 
     if (b->data.player_to_play == WHITE)
@@ -217,7 +217,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
             std::cout << "SETTING : " << optimum.movement << std::endl;
             best_move = optimum.movement;
             std::cout << "SET AT : " << cutoff << std::endl;
-            ++cutoff;
+            cutoff += 2;
             // return optimum.movement;
         }
         
