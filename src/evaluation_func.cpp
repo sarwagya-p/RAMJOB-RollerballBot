@@ -1,9 +1,13 @@
 #include <unordered_map>
-#include<random>
+#include <random>
 #include "evaluation_func.hpp"
 
 double sigmoid(double x){
         return 1/(1+std::exp(-x));
+}
+double inv_sigmoid(double y)
+{
+    return log(1/(1-y));
 }
 
 double sigmoid_derivative(double x){
@@ -12,7 +16,7 @@ double sigmoid_derivative(double x){
 
 NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_sizes, std::string filename, 
     bool randomize_weights):filename(filename){
-    learning_rate = 0.1;
+    learning_rate = 0.01;
     layer_sizes = hidden_layers_sizes;
     layer_sizes.insert(layer_sizes.begin(), input_size);
     layer_sizes.push_back(1);
@@ -46,6 +50,8 @@ NeuralNetwork::NeuralNetwork(int input_size, std::vector<int> hidden_layers_size
             biases[i][j] = normal_random(generator);
         }
     }
+
+    dump_weights(filename);
 }
 
 double get_margin_score(std::shared_ptr<Board> board_state)
@@ -115,7 +121,7 @@ std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector
                 weighted_sum += outputs[layer-1][j]*weights[layer-1][i][j];
             }
 
-            outputs[layer][i] = sigmoid(weighted_sum);
+            outputs[layer][i] = (sigmoid(weighted_sum));
         }
     }
     return outputs;
@@ -123,12 +129,12 @@ std::vector<std::vector<double>> NeuralNetwork::forward_prop_outputs(std::vector
 
 double NeuralNetwork::evaluate(std::vector<double> features){
     // actual
-    return forward_prop_outputs(features).back()[0]*100;
+    return (forward_prop_outputs(features).back()[0])*100;
     
 }
 
 void NeuralNetwork::update(std::vector<double> features, double evaluated_output){
-    evaluated_output = evaluated_output/100;
+    evaluated_output = sigmoid(evaluated_output);
     std::vector<std::vector<double>> outputs = forward_prop_outputs(features);
 
     std::vector<std::vector<double>> errors(outputs.size()-1);
@@ -246,7 +252,7 @@ double WSum::evaluate(std::vector<double> features){
         weightedSum += weights[i]*features[i];
     }
     std::cout << "SUKAA SUM: " << weightedSum << std::endl;
-    return weightedSum*30;
+    return weightedSum;
 }
 
 void WSum::update(std::vector<double> features, double evaluated_output){

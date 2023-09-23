@@ -58,7 +58,7 @@ struct CompareMoveEval{
 struct CompareMoveEvalReverse{
     bool operator()(const move_eval mve1, const move_eval mve2)
     {
-        return (mve1.eval > mve2.eval);
+        return (mve1.eval < mve2.eval);
     }
 };
 

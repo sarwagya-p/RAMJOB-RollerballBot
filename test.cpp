@@ -185,6 +185,10 @@ std::shared_ptr<Board> create_random_board(int num_pieces){
 
 
     std::shared_ptr<Board> b = std::shared_ptr<Board>(new Board());
+    std::uniform_int_distribution<size_t> uniform_2(0, 1);
+    int ran = uniform_2(rd);
+    if(ran%2)
+        b->data.player_to_play = BLACK;
     b->data.board_0[b->data.b_rook_ws]  = 0;
     b->data.board_0[b->data.b_rook_bs]  = 0;
     b->data.board_0[b->data.b_king   ]  = 0;
@@ -324,13 +328,13 @@ void train_on_margin(std::shared_ptr<EvaluationFunc> evaluator, std::shared_ptr<
 {
     // std::shared_ptr<NeuralNetwork> a = std::shared_ptr<NeuralNetwork>(new NeuralNetwork(25, {10}, "data/weights.txt", true));
     double bmarg, eval;
-    std::uniform_int_distribution<size_t> uniform(0, 10);
+    std::uniform_int_distribution<size_t> uniform(0, 5);
     std::shared_ptr<Board> board = create_random_board(uniform(rd));
     std::cout << board_to_str(board->data.board_0) << std::endl;
     bmarg = wsum->evaluate(wsum->prepare_features(board));
     eval = evaluator->evaluate(wsum->prepare_features(board));
     std::cout << "BLYAAADD SUUUKAA EVAL FUNC ___ SCORE::" << eval << std::endl;
-    std::cout << "BLYAAADD SUUUKAA BOARD MARGIN ___ SCORE::" << bmarg << std::endl;
+    std::cout << "BLYAAADD SUUUKAA BOARD MARGIN ___ SCORE::" << (1/(1+std::exp(-bmarg)))*100 << std::endl;
     evaluator->update(evaluator->prepare_features(board), bmarg);
     // evaluator->dump_weights("data/weights.txt");
     
@@ -353,15 +357,16 @@ void train_wsum(int num_pieces){
 int main(){
     std::vector<int> hidden_layers = {5};
     std::shared_ptr<EvaluationFunc> a = std::make_shared<NeuralNetwork>(7, hidden_layers, "./data/weights.txt", true);
+    // return 0;
     long long i = 1;
     while (true)
     {
         std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTRAIN NUMBER :: " << i << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"<< std::endl; 
         train_neural(3);
         sleep(0.1);
-        if (!i%10000)
+        if (!(i%1000))
         {
-            sleep(10);
+            sleep(5);
         }
         i++;
         // break;
