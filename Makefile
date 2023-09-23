@@ -13,8 +13,8 @@ PYTHON_VERSION=$(shell python -c "import sys; print('python' + '.'.join(sys.vers
 
 rollerball:
 	mkdir -p bin
-	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/board.cpp src/engine.cpp src/evaluation_func.cpp src/search.cpp src/rollerball.cpp src/uciws.cpp -lpthread -o bin/rollerball_w
-	
+	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/board.cpp src/engine.cpp src/rollerball.cpp src/uciws.cpp -lpthread -o bin/rollerball
+
 rollerball_py:
 	mkdir -p bin
 	pip install -e .
@@ -33,14 +33,6 @@ package:
 	cd web && npm run build
 	cp -r web/dist build/rollerball/web
 	cd build && zip -r rollerball.zip rollerball
-
-test:
-	g++ test.cpp src/evaluation_func.cpp src/search.cpp src/board.cpp -o bin/test
-	./bin/test
-
-test_2:
-	g++ test_2.cpp src/evaluation_func.cpp src/search.cpp src/board.cpp -o bin/test
-	./bin/test
 
 dbg_frontend: src/debug_frontend.cpp 
 	$(CC) $(CFLAGS) $(INCLUDES) src/server.cpp src/debug_frontend.cpp -o bin/debug_frontend
