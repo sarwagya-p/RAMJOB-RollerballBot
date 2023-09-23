@@ -207,12 +207,13 @@ void NeuralNetwork::print_weights(){
 }
 
 WSum::WSum(int input_size, std::string filename, bool randomize): filename(filename){
-    weights = std::vector<double>(input_size);
-
     if (!randomize){
-        load_weights(filename);
+        weights = {1, 5, 3, 0.5, -0.5, 0.02, 0.8};
+        // load_weights(filename);
         return;
     }
+
+    weights = std::vector<double>(input_size);
 
     std::random_device rd;
     std::mt19937 generator(rd());
@@ -318,7 +319,7 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     white_pieces += num_w_pawns;
     black_pieces += num_b_pawns;
 
-    features.push_back((num_w_pawns-num_b_pawns)/2);
+    features.push_back((num_w_pawns-num_b_pawns));
     // std::cout << "Pawns: " << num_w_pawns << " " << num_b_pawns << std::endl;
     // Rook Adv
 
@@ -339,7 +340,7 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     white_pieces += 5*num_w_rooks;
     black_pieces += 5*num_b_rooks;
 
-    features.push_back((num_w_rooks-num_b_rooks)/2);
+    features.push_back((num_w_rooks-num_b_rooks));
 
     // Bishop Adv
     double num_w_bishops = 0;
@@ -372,7 +373,7 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
     promotion_adv -= manhattan_to_promotion(board, board->data.b_pawn_bs, BLACK) 
                             + manhattan_to_promotion(board, board->data.b_pawn_ws, BLACK);
 
-    features.push_back(promotion_adv/14);
+    features.push_back(promotion_adv);
     // std::cout << "Man dist: " << promotion_adv << std::endl;
     // In check
 
@@ -385,11 +386,11 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
             std::cout << "IS MATEEE" << std::endl;
             if(board->data.player_to_play == WHITE)
             {
-                check = -1000;
+                check = -100000;
             }
             else
             {
-                check = 1000;
+                check = 100000;
             }
         }
     }
