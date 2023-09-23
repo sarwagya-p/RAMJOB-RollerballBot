@@ -15,7 +15,7 @@ public:
     virtual void load_weights(std::string filename) = 0;
     virtual void dump_weights(std::string filename) = 0;
 
-    virtual std::vector<double> prepare_features(std::shared_ptr<Board> b);
+    virtual std::vector<double> prepare_features(std::shared_ptr<Board> b, int legal_moves_size);
     virtual double evaluate(std::vector<double> features) = 0;
     virtual void update(std::vector<double> features, double evaluated_output) = 0;
 
@@ -240,7 +240,7 @@ void NeuralNetwork::print_weights(){
 
 WSum::WSum(int input_size, std::string filename, bool randomize): filename(filename){
     if (!randomize){
-        weights = {1, 5, 3, 0.5, -0.5, 0.02, 0.8};
+        weights = {1, 10, 3, 0.5, -0.5, 0.02, 0.8};
         // load_weights(filename);
         return;
     }
@@ -340,7 +340,25 @@ int manhattan_to_promotion(std::shared_ptr<Board> b, U8 piece, PlayerColor col){
     return 7-std::min(d1, d2);
 }
 
-std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> board){
+double is_pawns_connected(std::shared_ptr<Board> board, PlayerColor col){
+    U8 pos1, pos2;
+
+    if (col == WHITE){
+        pos1 = board->data.w_pawn_bs;
+        pos1 = board->data.w_pawn_ws;
+    }
+    else {
+        pos1 = board->data.b_pawn_bs;
+        pos1 = board->data.b_pawn_ws;
+    }
+
+    if (pos1 == DEAD || !(board->data.board_0[pos1] & PAWN)) return 0;
+    if (pos2 == DEAD || !(board->data.board_0[pos2] & PAWN)) return 0;
+
+    return 10-(std::abs(getx(pos1)-getx(pos2)) + std::abs(gety(pos1)+gety(pos2)));
+}
+
+std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> board, int legal_moves_size){
     std::vector<double> features;
 
     double white_pieces = 1, black_pieces = 1;
@@ -407,13 +425,20 @@ std::vector<double> EvaluationFunc::prepare_features(std::shared_ptr<Board> boar
 
     features.push_back(promotion_adv);
     // std::cout << "Man dist: " << promotion_adv << std::endl;
+
+    // Connected Pawns
+
+    double connected_pawns = is_pawns_connected(board, WHITE) - is_pawns_connected(board, BLACK);
+
+    // features.push_back(connected_pawns);
+
     // In check
 
     double check = 0;
 
     if (board->in_check()){
         check += int(board->data.player_to_play == WHITE) - int(board->data.player_to_play == BLACK);
-        if (board->get_legal_moves().empty())
+        if (legal_moves_size == 0)
         {
             std::cout << "IS MATEEE" << std::endl;
             if(board->data.player_to_play == WHITE)
@@ -541,7 +566,7 @@ std::vector<move_eval> Node::Order_Children(std::atomic<bool>& search, bool reve
         temp.movement = test_move;
         board_state->do_move(test_move);
         // std::cout << "Evaluating move: " << move_to_str(test_move) << std::endl;
-        temp.eval = evaluator->evaluate(evaluator->prepare_features(board_state));
+        temp.eval = evaluator->evaluate(evaluator->prepare_features(board_state, board_state->get_legal_moves().size()));
         undo_last_move(board_state, test_move);
 
         move_eval_arr.push_back(temp);
@@ -711,7 +736,7 @@ void search_move(std::shared_ptr<Board> b, std::atomic<bool>& search, std::atomi
     if (training)
     {
         std::cout << "Updating" << std::endl;
-        evaluator->update(evaluator->prepare_features(b), optimum.eval);
+        // evaluator->update(evaluator->prepare_features(b), optimum.eval);
         std::cout << "Updated" << std::endl;
     }
     return;
@@ -729,11 +754,11 @@ double MAX_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
 
     if (legal_moves.empty())
     {   
-        return evaluator->evaluate(evaluator->prepare_features(b));
+        return evaluator->evaluate(evaluator->prepare_features(b, 0));
     }
     if (i == cutoff)
     {
-        return evaluator->evaluate(evaluator->prepare_features(b));
+        return evaluator->evaluate(evaluator->prepare_features(b, legal_moves.size()));
     }
     std::cout << "Ordering" << std::endl;
     maxnode->Order_Children(search);
@@ -774,12 +799,12 @@ double MIN_VAL(std::shared_ptr<Board> b, double alpha, double beta, int i, int c
     if (legal_moves.empty())
     {
         // std::cout << "Check4 : " << std::endl;
-        return evaluator->evaluate(evaluator->prepare_features(b));
+        return evaluator->evaluate(evaluator->prepare_features(b, 0));
         // std::cout << "Check5 : " << std::endl;
     }
     if (i == cutoff)
     {   
-        return evaluator->evaluate(evaluator->prepare_features(b));
+        return evaluator->evaluate(evaluator->prepare_features(b, legal_moves.size()));
     }
     minnode->Order_Children(search, true);
     if (!search) return 0;
